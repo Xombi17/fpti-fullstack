@@ -504,4 +504,4 @@ def run_monte_carlo_simulation(n_clicks, target_value, years, monthly_contributi
         return f"Error: {str(e)}", {}
 
 if __name__ == '__main__':
-    app.run_server(debug=True, host='127.0.0.1', port=8050)
+    app.run(debug=True, host='127.0.0.1', port=8050)

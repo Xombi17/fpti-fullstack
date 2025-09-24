@@ -39,7 +39,7 @@ class TransactionResponse(BaseModel):
     created_at: datetime
     
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 @router.get("/", response_model=List[TransactionResponse])
 async def get_transactions(

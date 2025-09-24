@@ -28,7 +28,7 @@ class PortfolioResponse(BaseModel):
     unrealized_pnl: Optional[float] = None
     
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class PortfolioValue(BaseModel):
     portfolio_id: int

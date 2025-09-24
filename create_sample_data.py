@@ -3,12 +3,21 @@ Sample data creation script for testing the FPTI application.
 """
 import sys
 import os
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'backend'))
+
+# Add the backend directory to the Python path
+backend_path = os.path.join(os.path.dirname(__file__), 'backend')
+sys.path.append(backend_path)
 
 from datetime import datetime, timedelta
 import random
-from app.database import SessionLocal, init_db
-from app.models import User, Portfolio, Asset, Holding, Transaction, AssetType, TransactionType
+
+try:
+    from app.database import SessionLocal, init_db
+    from app.models import User, Portfolio, Asset, Holding, Transaction, AssetType, TransactionType
+except ImportError as e:
+    print(f"Import error: {e}")
+    print("Make sure you're running this from the project root directory")
+    sys.exit(1)
 
 def create_sample_data():
     """Create sample data for testing the application."""

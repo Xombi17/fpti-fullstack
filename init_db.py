@@ -5,7 +5,8 @@ import sys
 import os
 
 # Add the backend directory to the Python path
-sys.path.append(os.path.join(os.path.dirname(__file__), 'backend'))
+backend_path = os.path.join(os.path.dirname(__file__), 'backend')
+sys.path.append(backend_path)
 
 try:
     from app.database import init_db, engine
@@ -27,6 +28,9 @@ try:
     
 except ImportError as e:
     print(f"✗ Import error: {e}")
-    print("Make sure you've installed all dependencies: pip install -r requirements.txt")
+    print("Make sure you've installed all dependencies and you're in the correct directory")
+    print("Current working directory:", os.getcwd())
+    print("Backend path:", backend_path)
+    print("Backend exists:", os.path.exists(backend_path))
 except Exception as e:
     print(f"✗ Database initialization failed: {e}")
