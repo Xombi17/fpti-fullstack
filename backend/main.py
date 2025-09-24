@@ -78,6 +78,21 @@ async def health_check():
     """Health check endpoint."""
     return {"status": "healthy", "timestamp": "2025-09-24T12:00:00Z"}
 
+@app.get(f"{settings.api_v1_str}/")
+async def api_root():
+    """API v1 root endpoint."""
+    return {
+        "message": "FPTI API v1",
+        "version": "1.0.0",
+        "available_endpoints": [
+            f"{settings.api_v1_str}/portfolios",
+            f"{settings.api_v1_str}/transactions", 
+            f"{settings.api_v1_str}/assets",
+            f"{settings.api_v1_str}/market-data",
+            f"{settings.api_v1_str}/analytics"
+        ]
+    }
+
 if __name__ == "__main__":
     uvicorn.run(
         "main:app",
