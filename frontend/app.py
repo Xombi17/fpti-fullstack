@@ -48,43 +48,52 @@ app.layout = dbc.Container([
         ])
     ], className="modern-header"),
     
-    # Modern Navigation Tabs
-    dbc.Row([
-        dbc.Col([
-            dbc.Tabs([
-                dbc.Tab([
-                    html.Div([
-                        html.I(className="fas fa-chart-line me-2"),
-                        "Dashboard"
-                    ])
-                ], tab_id="dashboard"),
-                dbc.Tab([
-                    html.Div([
-                        html.I(className="fas fa-analytics me-2"),
-                        "Analysis"
-                    ])
-                ], tab_id="analysis"),
-                dbc.Tab([
-                    html.Div([
-                        html.I(className="fas fa-exchange-alt me-2"),
-                        "Transactions"
-                    ])
-                ], tab_id="transactions"),
-                dbc.Tab([
-                    html.Div([
-                        html.I(className="fas fa-dice me-2"),
-                        "Monte Carlo"
-                    ])
-                ], tab_id="monte-carlo"),
-                dbc.Tab([
-                    html.Div([
-                        html.I(className="fas fa-chart-bar me-2"),
-                        "Market Data"
-                    ])
-                ], tab_id="market-data"),
-            ], id="tabs", active_tab="dashboard", className="nav-tabs")
+    # Professional Navigation Bar
+    html.Div([
+        dbc.Container([
+            dbc.Row([
+                dbc.Col([
+                    dbc.Nav([
+                        dbc.NavItem(dbc.NavLink([
+                            html.I(className="fas fa-chart-line me-2"),
+                            "Dashboard"
+                        ], href="#", id="nav-dashboard", className="nav-link-custom active", active=True)),
+                        dbc.NavItem(dbc.NavLink([
+                            html.I(className="fas fa-chart-pie me-2"),
+                            "Analysis"
+                        ], href="#", id="nav-analysis", className="nav-link-custom")),
+                        dbc.NavItem(dbc.NavLink([
+                            html.I(className="fas fa-exchange-alt me-2"),
+                            "Transactions"
+                        ], href="#", id="nav-transactions", className="nav-link-custom")),
+                        dbc.NavItem(dbc.NavLink([
+                            html.I(className="fas fa-dice me-2"),
+                            "Monte Carlo"
+                        ], href="#", id="nav-monte-carlo", className="nav-link-custom")),
+                        dbc.NavItem(dbc.NavLink([
+                            html.I(className="fas fa-chart-bar me-2"),
+                            "Market Data"
+                        ], href="#", id="nav-market-data", className="nav-link-custom")),
+                    ], pills=True, className="nav-pills-custom justify-content-center")
+                ])
+            ])
         ])
-    ], className="mb-4"),
+    ], className="navigation-bar mb-4"),
+    
+    # Store for active tab
+    dcc.Store(id='active-tab-store', data='dashboard'),
+    
+    # Page Title Section
+    html.Div([
+        dbc.Container([
+            dbc.Row([
+                dbc.Col([
+                    html.H2(id='page-title', className="page-title"),
+                    html.P(id='page-subtitle', className="page-subtitle")
+                ])
+            ])
+        ])
+    ], className="page-header"),
     
     # Tab Content
     html.Div(id='tab-content'),
@@ -477,10 +486,81 @@ def create_monte_carlo_layout():
         ])
     ]
 
+# Navigation Click Handlers
+@app.callback(
+    [Output('active-tab-store', 'data'),
+     Output('nav-dashboard', 'className'),
+     Output('nav-analysis', 'className'),
+     Output('nav-transactions', 'className'),
+     Output('nav-monte-carlo', 'className'),
+     Output('nav-market-data', 'className')],
+    [Input('nav-dashboard', 'n_clicks'),
+     Input('nav-analysis', 'n_clicks'),
+     Input('nav-transactions', 'n_clicks'),
+     Input('nav-monte-carlo', 'n_clicks'),
+     Input('nav-market-data', 'n_clicks')],
+    [State('active-tab-store', 'data')]
+)
+def update_navigation(dash_clicks, analysis_clicks, trans_clicks, mc_clicks, market_clicks, current_tab):
+    ctx = dash.callback_context
+    if not ctx.triggered:
+        # Default state
+        return 'dashboard', 'nav-link-custom active', 'nav-link-custom', 'nav-link-custom', 'nav-link-custom', 'nav-link-custom'
+    
+    # Determine which button was clicked
+    button_id = ctx.triggered[0]['prop_id'].split('.')[0]
+    
+    # Set active tab based on clicked button
+    if button_id == 'nav-dashboard':
+        active_tab = 'dashboard'
+    elif button_id == 'nav-analysis':
+        active_tab = 'analysis'
+    elif button_id == 'nav-transactions':
+        active_tab = 'transactions'
+    elif button_id == 'nav-monte-carlo':
+        active_tab = 'monte-carlo'
+    elif button_id == 'nav-market-data':
+        active_tab = 'market-data'
+    else:
+        active_tab = current_tab or 'dashboard'
+    
+    # Set className for each nav link
+    classes = ['nav-link-custom'] * 5
+    nav_mapping = {
+        'dashboard': 0,
+        'analysis': 1,
+        'transactions': 2,
+        'monte-carlo': 3,
+        'market-data': 4
+    }
+    
+    if active_tab in nav_mapping:
+        classes[nav_mapping[active_tab]] = 'nav-link-custom active'
+    
+    return active_tab, *classes
+
+# Page Title Callback
+@app.callback(
+    [Output('page-title', 'children'),
+     Output('page-subtitle', 'children')],
+    Input('active-tab-store', 'data')
+)
+def update_page_title(active_tab):
+    titles = {
+        'dashboard': ('Portfolio Dashboard', 'Real-time overview of your investment portfolio'),
+        'analysis': ('Portfolio Analysis', 'In-depth performance and risk analysis'),
+        'transactions': ('Transaction Management', 'Track and manage your investment transactions'),
+        'monte-carlo': ('Monte Carlo Simulation', 'Advanced portfolio projections and scenarios'),
+        'market-data': ('Market Data', 'Live market quotes and financial information')
+    }
+    
+    title, subtitle = titles.get(active_tab, titles['dashboard'])
+    return title, subtitle
+
 # Tab Content Callback
 @app.callback(
     Output('tab-content', 'children'),
-    Input('tabs', 'active_tab')
+    Input('active-tab-store', 'data')
 )
 def render_tab_content(active_tab):
     if active_tab == "dashboard":
@@ -493,7 +573,7 @@ def render_tab_content(active_tab):
         return create_transactions_layout()
     elif active_tab == "market-data":
         return create_market_data_layout()
-    return html.Div("Select a tab")
+    return create_dashboard_layout()  # Default to dashboard
 
 # Data Loading Callbacks
 @app.callback(
