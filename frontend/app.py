@@ -10,6 +10,8 @@ import pandas as pd
 import requests
 from datetime import datetime, timedelta
 import json
+import asyncio
+import aiohttp
 
 # Initialize Dash app
 app = dash.Dash(
@@ -25,6 +27,73 @@ app = dash.Dash(
 
 # API Configuration
 API_BASE_URL = "http://localhost:8000/api/v1"
+
+# Market Data Functions
+def fetch_live_market_data(symbols_list):
+    """Fetch live market data for a list of symbols."""
+    try:
+        symbols_str = ','.join(symbols_list)
+        response = requests.get(f"{API_BASE_URL}/market-data/live-quotes", params={"symbols": symbols_str})
+        if response.status_code == 200:
+            return response.json()
+        else:
+            print(f"Error fetching market data: {response.status_code}")
+            return None
+    except Exception as e:
+        print(f"Error in fetch_live_market_data: {e}")
+        return None
+
+def fetch_detailed_quote(symbol):
+    """Fetch detailed quote for a single symbol."""
+    try:
+        response = requests.get(f"{API_BASE_URL}/market-data/quote-detailed/{symbol}")
+        if response.status_code == 200:
+            return response.json()
+        else:
+            print(f"Error fetching detailed quote for {symbol}: {response.status_code}")
+            return None
+    except Exception as e:
+        print(f"Error in fetch_detailed_quote: {e}")
+        return None
+
+def fetch_intraday_data(symbol, interval="5min"):
+    """Fetch intraday data for a symbol."""
+    try:
+        response = requests.get(f"{API_BASE_URL}/market-data/intraday/{symbol}", params={"interval": interval})
+        if response.status_code == 200:
+            return response.json()
+        else:
+            print(f"Error fetching intraday data for {symbol}: {response.status_code}")
+            return None
+    except Exception as e:
+        print(f"Error in fetch_intraday_data: {e}")
+        return None
+
+def fetch_market_summary():
+    """Fetch market summary data."""
+    try:
+        response = requests.get(f"{API_BASE_URL}/market-data/summary")
+        if response.status_code == 200:
+            return response.json()
+        else:
+            print(f"Error fetching market summary: {response.status_code}")
+            return None
+    except Exception as e:
+        print(f"Error in fetch_market_summary: {e}")
+        return None
+
+def search_symbols(keywords):
+    """Search for symbols by keywords."""
+    try:
+        response = requests.get(f"{API_BASE_URL}/market-data/search/{keywords}")
+        if response.status_code == 200:
+            return response.json()
+        else:
+            print(f"Error searching symbols: {response.status_code}")
+            return None
+    except Exception as e:
+        print(f"Error in search_symbols: {e}")
+        return None
 
 # App Layout
 app.layout = dbc.Container([
@@ -352,53 +421,136 @@ def create_transactions_layout():
 # Market Data Tab Content
 def create_market_data_layout():
     return [
+        # Live Market Data Header
+        dbc.Row([
+            dbc.Col([
+                dbc.Alert([
+                    html.I(className="fas fa-broadcast-tower me-2"),
+                    "Live Market Data powered by Alpha Vantage • Updates every 5 minutes"
+                ], color="info", className="mb-4")
+            ])
+        ]),
+        
+        # Market Summary & Quote Lookup
         dbc.Row([
             dbc.Col([
                 dbc.Card([
                     dbc.CardBody([
-                        html.H4("Market Summary"),
+                        html.H4([
+                            html.I(className="fas fa-chart-line me-2"),
+                            "Market Summary"
+                        ]),
                         html.Div(id="market-summary")
                     ])
-                ])
+                ], className="modern-card")
             ], width=6),
             dbc.Col([
                 dbc.Card([
                     dbc.CardBody([
-                        html.H4("Stock Quote Lookup"),
+                        html.H4([
+                            html.I(className="fas fa-search-dollar me-2"),
+                            "Stock Quote Lookup"
+                        ]),
                         dbc.InputGroup([
                             dbc.Input(
                                 id="stock-symbol-input",
-                                placeholder="Enter symbol (e.g., AAPL)"
+                                placeholder="Enter symbol (e.g., AAPL)",
+                                className="modern-input"
                             ),
                             dbc.Button(
-                                "Get Quote",
+                                [html.I(className="fas fa-chart-bar me-2"), "Get Quote"],
                                 id="get-quote-btn",
-                                color="info"
+                                color="primary",
+                                className="modern-button"
                             )
                         ], className="mb-3"),
                         html.Div(id="stock-quote-result")
                     ])
-                ])
+                ], className="modern-card")
             ], width=6),
         ], className="mb-4"),
         
+        # Live Portfolio Updates & Symbol Search
         dbc.Row([
             dbc.Col([
                 dbc.Card([
                     dbc.CardBody([
-                        html.H4("Watchlist"),
-                        html.Div(id="watchlist-table")
+                        html.H4([
+                            html.I(className="fas fa-coins me-2"),
+                            "Live Portfolio Prices"
+                        ]),
+                        html.Div(id="live-portfolio-prices")
                     ])
-                ])
+                ], className="modern-card")
             ], width=8),
             dbc.Col([
                 dbc.Card([
                     dbc.CardBody([
-                        html.H4("Market Movers"),
-                        html.Div(id="market-movers")
+                        html.H4([
+                            html.I(className="fas fa-search me-2"),
+                            "Symbol Search"
+                        ]),
+                        dbc.InputGroup([
+                            dbc.Input(
+                                id="symbol-search-input",
+                                placeholder="Search companies..."
+                            ),
+                            dbc.Button(
+                                [html.I(className="fas fa-search")],
+                                id="symbol-search-btn",
+                                color="info"
+                            )
+                        ], className="mb-3"),
+                        html.Div(id="symbol-search-results", style={"max-height": "300px", "overflow-y": "auto"})
                     ])
-                ])
+                ], className="modern-card")
             ], width=4),
+        ], className="mb-4"),
+        
+        # Intraday Chart
+        dbc.Row([
+            dbc.Col([
+                dbc.Card([
+                    dbc.CardBody([
+                        html.H4([
+                            html.I(className="fas fa-chart-area me-2"),
+                            "Intraday Chart"
+                        ]),
+                        dbc.Row([
+                            dbc.Col([
+                                dbc.InputGroup([
+                                    dbc.Input(
+                                        id="intraday-symbol-input",
+                                        placeholder="Symbol",
+                                        value="AAPL"
+                                    ),
+                                    dbc.Select(
+                                        id="intraday-interval-select",
+                                        options=[
+                                            {"label": "1 minute", "value": "1min"},
+                                            {"label": "5 minutes", "value": "5min"},
+                                            {"label": "15 minutes", "value": "15min"},
+                                            {"label": "30 minutes", "value": "30min"},
+                                            {"label": "60 minutes", "value": "60min"}
+                                        ],
+                                        value="5min"
+                                    ),
+                                    dbc.Button(
+                                        [html.I(className="fas fa-refresh me-2"), "Load"],
+                                        id="load-intraday-btn",
+                                        color="success"
+                                    )
+                                ])
+                            ], width=6),
+                            dbc.Col([
+                                html.Small("Last updated: ", className="text-muted"),
+                                html.Small(id="intraday-last-updated", className="text-muted")
+                            ], width=6, className="d-flex align-items-center justify-content-end")
+                        ], className="mb-3"),
+                        dcc.Graph(id="intraday-chart")
+                    ])
+                ], className="modern-card")
+            ])
         ])
     ]
 
@@ -588,8 +740,29 @@ def load_data(n):
         portfolios = portfolio_response.json() if portfolio_response.status_code == 200 else []
         
         # Load market summary
-        market_response = requests.get(f"{API_BASE_URL}/market-data/summary")
-        market_data = market_response.json() if market_response.status_code == 200 else {}
+        market_summary = fetch_market_summary()
+        
+        # Get all unique symbols from portfolios for live prices
+        symbols = set()
+        for portfolio in portfolios:
+            for holding in portfolio.get('holdings', []):
+                if holding.get('asset', {}).get('symbol'):
+                    symbols.add(holding['asset']['symbol'])
+        
+        # Fetch live prices for portfolio symbols
+        live_quotes = {}
+        if symbols:
+            live_data = fetch_live_market_data(list(symbols))
+            if live_data and 'quotes' in live_data:
+                for quote in live_data['quotes']:
+                    live_quotes[quote['symbol']] = quote
+        
+        # Combine market data
+        market_data = {
+            'summary': market_summary,
+            'live_quotes': live_quotes,
+            'last_updated': datetime.now().isoformat()
+        }
         
         return portfolios, market_data
     except Exception as e:
@@ -1099,76 +1272,6 @@ def update_transactions_table(n_clicks, portfolio_filter, type_filter, add_resul
     except Exception as e:
         return html.P(f"Error loading transactions: {str(e)}")
 
-# Market Data Callbacks
-@app.callback(
-    Output('market-summary', 'children'),
-    Input('interval-component', 'n_intervals')
-)
-def update_market_summary(n):
-    try:
-        response = requests.get(f"{API_BASE_URL}/market-data/summary")
-        if response.status_code == 200:
-            data = response.json()
-            return [
-                html.H6("Market Status: Open", className="text-success"),
-                html.P(f"Last Updated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-            ]
-        else:
-            return html.P("Market data unavailable")
-    except Exception as e:
-        return html.P(f"Error loading market data: {str(e)}")
-
-@app.callback(
-    Output('stock-quote-result', 'children'),
-    [Input('get-quote-btn', 'n_clicks')],
-    [State('stock-symbol-input', 'value')]
-)
-def get_stock_quote(n_clicks, symbol):
-    if not n_clicks or not symbol:
-        return ""
-    
-    try:
-        response = requests.get(f"{API_BASE_URL}/market-data/{symbol.upper()}")
-        if response.status_code == 200:
-            data = response.json()
-            return dbc.Card([
-                dbc.CardBody([
-                    html.H5(f"{symbol.upper()}", className="card-title"),
-                    html.H4(f"${data.get('current_price', 'N/A')}", className="text-primary"),
-                    html.P(f"Change: {data.get('change', 'N/A')} ({data.get('change_percent', 'N/A')}%)")
-                ])
-            ])
-        else:
-            return dbc.Alert(f"Quote not found for {symbol}", color="warning")
-    except Exception as e:
-        return dbc.Alert(f"Error: {str(e)}", color="danger")
-
-@app.callback(
-    Output('watchlist-table', 'children'),
-    Input('interval-component', 'n_intervals')
-)
-def update_watchlist(n):
-    # Mock watchlist for now
-    watchlist_data = {
-        'Symbol': ['AAPL', 'GOOGL', 'MSFT', 'TSLA'],
-        'Price': [175.50, 2850.00, 340.25, 245.80],
-        'Change': ['+2.50', '+15.30', '-1.25', '+8.90'],
-        'Change %': ['+1.45%', '+0.54%', '-0.37%', '+3.75%']
-    }
-    
-    df = pd.DataFrame(watchlist_data)
-    
-    return dash_table.DataTable(
-        data=df.to_dict('records'),
-        columns=[
-            {"name": "Symbol", "id": "Symbol"},
-            {"name": "Price", "id": "Price", "type": "numeric", "format": {"specifier": "$,.2f"}},
-            {"name": "Change", "id": "Change"},
-            {"name": "Change %", "id": "Change %"},
-        ],
-        style_cell={'textAlign': 'center'}
-    )
-
 # Portfolio Analysis Callbacks
 @app.callback(
     Output('performance-metrics', 'children'),
@@ -1362,6 +1465,229 @@ def show_connection_errors(portfolio_data, market_data):
         )
     
     return alerts
+
+# Market Data Callbacks
+@app.callback(
+    Output('market-summary', 'children'),
+    Input('market-data-store', 'data')
+)
+def update_market_summary(market_data):
+    try:
+        if not market_data or 'summary' not in market_data:
+            return html.P("No market data available", className="text-muted")
+        
+        summary = market_data['summary']
+        if not summary or 'indices' not in summary:
+            return html.P("Market summary unavailable", className="text-muted")
+        
+        indices = summary['indices']
+        cards = []
+        
+        for name, price in indices.items():
+            if price is not None:
+                cards.append(
+                    dbc.Col([
+                        dbc.Card([
+                            dbc.CardBody([
+                                html.H6(name, className="card-title text-muted"),
+                                html.H5(f"${price:,.2f}", className="text-info mb-0"),
+                                html.Small("Live", className="text-success")
+                            ])
+                        ], className="text-center")
+                    ], width=6, className="mb-2")
+                )
+        
+        return dbc.Row(cards) if cards else html.P("No data available", className="text-muted")
+    except Exception as e:
+        return html.P(f"Error: {str(e)}", className="text-danger")
+
+@app.callback(
+    Output('stock-quote-result', 'children'),
+    [Input('get-quote-btn', 'n_clicks')],
+    [State('stock-symbol-input', 'value')]
+)
+def get_stock_quote(n_clicks, symbol):
+    if not n_clicks or not symbol:
+        return ""
+    
+    quote_data = fetch_detailed_quote(symbol.upper())
+    if not quote_data:
+        return dbc.Alert("Quote not found or API error", color="danger")
+    
+    change_color = "success" if quote_data['change'] >= 0 else "danger"
+    change_icon = "fa-arrow-up" if quote_data['change'] >= 0 else "fa-arrow-down"
+    
+    return dbc.Card([
+        dbc.CardBody([
+            dbc.Row([
+                dbc.Col([
+                    html.H4(quote_data['symbol'], className="mb-1"),
+                    html.H3(f"${quote_data['price']:.2f}", className="text-primary mb-0")
+                ], width=6),
+                dbc.Col([
+                    html.P([
+                        html.I(className=f"fas {change_icon} me-1"),
+                        f"${quote_data['change']:.2f} ({quote_data['change_percent']}%)"
+                    ], className=f"text-{change_color} mb-1"),
+                    html.Small(f"Volume: {quote_data['volume']:,}", className="text-muted")
+                ], width=6, className="text-end")
+            ]),
+            html.Hr(),
+            dbc.Row([
+                dbc.Col([
+                    html.Small("Open", className="text-muted d-block"),
+                    html.Strong(f"${quote_data['open']:.2f}")
+                ], width=3),
+                dbc.Col([
+                    html.Small("High", className="text-muted d-block"),
+                    html.Strong(f"${quote_data['high']:.2f}")
+                ], width=3),
+                dbc.Col([
+                    html.Small("Low", className="text-muted d-block"),
+                    html.Strong(f"${quote_data['low']:.2f}")
+                ], width=3),
+                dbc.Col([
+                    html.Small("Prev Close", className="text-muted d-block"),
+                    html.Strong(f"${quote_data['previous_close']:.2f}")
+                ], width=3)
+            ])
+        ])
+    ])
+
+@app.callback(
+    Output('live-portfolio-prices', 'children'),
+    Input('market-data-store', 'data')
+)
+def update_live_portfolio_prices(market_data):
+    try:
+        if not market_data or 'live_quotes' not in market_data:
+            return html.P("No live data available", className="text-muted")
+        
+        live_quotes = market_data['live_quotes']
+        if not live_quotes:
+            return html.P("No portfolio symbols found", className="text-muted")
+        
+        table_data = []
+        for symbol, quote in live_quotes.items():
+            table_data.append({
+                "Symbol": symbol,
+                "Price": f"${quote['price']:.2f}",
+                "Change": f"${quote['change']:.2f}",
+                "Change %": f"{quote['change_percent']}%",
+                "Volume": f"{quote['volume']:,}",
+                "Status": "LIVE"
+            })
+        
+        if not table_data:
+            return html.P("No live quotes available", className="text-muted")
+        
+        return dash_table.DataTable(
+            data=table_data,
+            columns=[
+                {"name": "Symbol", "id": "Symbol"},
+                {"name": "Price", "id": "Price"},
+                {"name": "Change", "id": "Change"},
+                {"name": "Change %", "id": "Change %"},
+                {"name": "Volume", "id": "Volume"},
+                {"name": "Status", "id": "Status"}
+            ],
+            style_cell={'textAlign': 'left', 'fontSize': '14px'},
+            style_data_conditional=[
+                {
+                    'if': {'filter_query': '{Change} > 0'},
+                    'color': '#00d084'
+                },
+                {
+                    'if': {'filter_query': '{Change} < 0'},
+                    'color': '#ff4757'
+                }
+            ],
+            style_header={'backgroundColor': 'var(--dark-surface)', 'color': 'var(--light-text)'},
+            style_cell_conditional=[
+                {'if': {'column_id': 'Status'}, 'color': '#00d084', 'fontWeight': 'bold'}
+            ]
+        )
+    except Exception as e:
+        return html.P(f"Error: {str(e)}", className="text-danger")
+
+@app.callback(
+    Output('symbol-search-results', 'children'),
+    [Input('symbol-search-btn', 'n_clicks')],
+    [State('symbol-search-input', 'value')]
+)
+def search_symbols_callback(n_clicks, keywords):
+    if not n_clicks or not keywords:
+        return ""
+    
+    search_results = search_symbols(keywords)
+    if not search_results:
+        return dbc.Alert("No symbols found or API error", color="warning")
+    
+    results = []
+    for result in search_results[:10]:  # Limit to top 10 results
+        results.append(
+            dbc.ListGroupItem([
+                html.Div([
+                    html.Strong(result['symbol'], className="text-primary"),
+                    html.Small(f" • {result['region']} • {result['currency']}", className="text-muted ms-2")
+                ]),
+                html.Small(result['name'], className="text-muted"),
+                html.Small(f"Match: {result['match_score']:.1%}", className="text-info float-end")
+            ])
+        )
+    
+    return dbc.ListGroup(results)
+
+@app.callback(
+    [Output('intraday-chart', 'figure'),
+     Output('intraday-last-updated', 'children')],
+    [Input('load-intraday-btn', 'n_clicks')],
+    [State('intraday-symbol-input', 'value'),
+     State('intraday-interval-select', 'value')]
+)
+def update_intraday_chart(n_clicks, symbol, interval):
+    if not n_clicks or not symbol:
+        return {}, ""
+    
+    intraday_data = fetch_intraday_data(symbol.upper(), interval)
+    if not intraday_data or 'data' not in intraday_data:
+        fig = go.Figure()
+        fig.add_annotation(text="No intraday data available", x=0.5, y=0.5, showarrow=False)
+        fig.update_layout(
+            xaxis=dict(visible=False),
+            yaxis=dict(visible=False),
+            plot_bgcolor='rgba(0,0,0,0)',
+            paper_bgcolor='rgba(0,0,0,0)'
+        )
+        return fig, "Error loading data"
+    
+    df_data = pd.DataFrame(intraday_data['data'])
+    df_data['timestamp'] = pd.to_datetime(df_data['timestamp'])
+    df_data = df_data.sort_values('timestamp')
+    
+    fig = go.Figure()
+    
+    # Add candlestick chart
+    fig.add_trace(go.Candlestick(
+        x=df_data['timestamp'],
+        open=df_data['open'],
+        high=df_data['high'],
+        low=df_data['low'],
+        close=df_data['close'],
+        name=symbol.upper()
+    ))
+    
+    fig.update_layout(
+        title=f"{symbol.upper()} - {interval} Intraday Chart",
+        xaxis_title="Time",
+        yaxis_title="Price ($)",
+        plot_bgcolor='rgba(0,0,0,0)',
+        paper_bgcolor='rgba(0,0,0,0)',
+        font={'family': 'Inter, sans-serif', 'color': '#e4e4e7'},
+        xaxis_rangeslider_visible=False
+    )
+    
+    return fig, datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 if __name__ == '__main__':
     app.run(debug=True, host='127.0.0.1', port=8050)

@@ -120,6 +120,12 @@ class MarketDataService:
         if not settings.alpha_vantage_api_key:
             raise ValueError("Alpha Vantage API key not configured")
         
+        # Check cache first
+        cache_key = f"av_price_{symbol}"
+        cached_price = market_cache.get(cache_key)
+        if cached_price is not None:
+            return cached_price
+        
         url = "https://www.alphavantage.co/query"
         params = {
             "function": "GLOBAL_QUOTE",
@@ -131,12 +137,164 @@ class MarketDataService:
             async with self.session.get(url, params=params) as response:
                 if response.status == 200:
                     data = await response.json()
+                    
+                    # Check for API limit error
+                    if "Note" in data:
+                        print(f"Alpha Vantage API limit reached: {data['Note']}")
+                        return None
+                    
                     global_quote = data.get("Global Quote", {})
                     price_str = global_quote.get("05. price")
                     if price_str:
-                        return float(price_str)
+                        price = float(price_str)
+                        market_cache.set(cache_key, price)
+                        return price
         except Exception as e:
             print(f"Error fetching Alpha Vantage price for {symbol}: {e}")
+        
+        return None
+    
+    async def get_alpha_vantage_quote_detailed(self, symbol: str) -> Optional[Dict]:
+        """Get detailed quote information from Alpha Vantage."""
+        if not settings.alpha_vantage_api_key:
+            raise ValueError("Alpha Vantage API key not configured")
+        
+        cache_key = f"av_detailed_{symbol}"
+        cached_data = market_cache.get(cache_key)
+        if cached_data is not None:
+            return cached_data
+        
+        url = "https://www.alphavantage.co/query"
+        params = {
+            "function": "GLOBAL_QUOTE",
+            "symbol": symbol,
+            "apikey": settings.alpha_vantage_api_key
+        }
+        
+        try:
+            async with self.session.get(url, params=params) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    
+                    if "Note" in data:
+                        print(f"Alpha Vantage API limit reached: {data['Note']}")
+                        return None
+                    
+                    global_quote = data.get("Global Quote", {})
+                    if global_quote:
+                        formatted_data = {
+                            "symbol": global_quote.get("01. symbol"),
+                            "open": float(global_quote.get("02. open", 0)),
+                            "high": float(global_quote.get("03. high", 0)),
+                            "low": float(global_quote.get("04. low", 0)),
+                            "price": float(global_quote.get("05. price", 0)),
+                            "volume": int(global_quote.get("06. volume", 0)),
+                            "latest_trading_day": global_quote.get("07. latest trading day"),
+                            "previous_close": float(global_quote.get("08. previous close", 0)),
+                            "change": float(global_quote.get("09. change", 0)),
+                            "change_percent": global_quote.get("10. change percent", "0%").replace("%", "")
+                        }
+                        market_cache.set(cache_key, formatted_data)
+                        return formatted_data
+        except Exception as e:
+            print(f"Error fetching Alpha Vantage detailed quote for {symbol}: {e}")
+        
+        return None
+    
+    async def get_alpha_vantage_intraday(self, symbol: str, interval: str = "5min") -> Optional[Dict]:
+        """
+        Get intraday data from Alpha Vantage.
+        
+        Args:
+            symbol: Stock symbol
+            interval: Time interval (1min, 5min, 15min, 30min, 60min)
+        """
+        if not settings.alpha_vantage_api_key:
+            raise ValueError("Alpha Vantage API key not configured")
+        
+        url = "https://www.alphavantage.co/query"
+        params = {
+            "function": "TIME_SERIES_INTRADAY",
+            "symbol": symbol,
+            "interval": interval,
+            "apikey": settings.alpha_vantage_api_key,
+            "outputsize": "compact"
+        }
+        
+        try:
+            async with self.session.get(url, params=params) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    
+                    if "Note" in data:
+                        print(f"Alpha Vantage API limit reached: {data['Note']}")
+                        return None
+                    
+                    time_series_key = f"Time Series ({interval})"
+                    time_series = data.get(time_series_key, {})
+                    
+                    if time_series:
+                        formatted_data = []
+                        for timestamp, values in time_series.items():
+                            formatted_data.append({
+                                "timestamp": timestamp,
+                                "open": float(values.get("1. open", 0)),
+                                "high": float(values.get("2. high", 0)),
+                                "low": float(values.get("3. low", 0)),
+                                "close": float(values.get("4. close", 0)),
+                                "volume": int(values.get("5. volume", 0))
+                            })
+                        
+                        return {
+                            "symbol": symbol,
+                            "interval": interval,
+                            "data": sorted(formatted_data, key=lambda x: x["timestamp"])
+                        }
+        except Exception as e:
+            print(f"Error fetching Alpha Vantage intraday data for {symbol}: {e}")
+        
+        return None
+    
+    async def search_alpha_vantage_symbols(self, keywords: str) -> Optional[List[Dict]]:
+        """Search for stock symbols using Alpha Vantage."""
+        if not settings.alpha_vantage_api_key:
+            raise ValueError("Alpha Vantage API key not configured")
+        
+        url = "https://www.alphavantage.co/query"
+        params = {
+            "function": "SYMBOL_SEARCH",
+            "keywords": keywords,
+            "apikey": settings.alpha_vantage_api_key
+        }
+        
+        try:
+            async with self.session.get(url, params=params) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    
+                    if "Note" in data:
+                        print(f"Alpha Vantage API limit reached: {data['Note']}")
+                        return None
+                    
+                    matches = data.get("bestMatches", [])
+                    formatted_matches = []
+                    
+                    for match in matches:
+                        formatted_matches.append({
+                            "symbol": match.get("1. symbol"),
+                            "name": match.get("2. name"),
+                            "type": match.get("3. type"),
+                            "region": match.get("4. region"),
+                            "market_open": match.get("5. marketOpen"),
+                            "market_close": match.get("6. marketClose"),
+                            "timezone": match.get("7. timezone"),
+                            "currency": match.get("8. currency"),
+                            "match_score": float(match.get("9. matchScore", 0))
+                        })
+                    
+                    return formatted_matches
+        except Exception as e:
+            print(f"Error searching Alpha Vantage symbols for '{keywords}': {e}")
         
         return None
     

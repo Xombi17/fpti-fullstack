@@ -196,3 +196,121 @@ async def clear_price_cache():
     """Clear the price cache."""
     market_cache.clear()
     return {"message": "Price cache cleared"}
+
+# Alpha Vantage specific endpoints
+class DetailedQuoteResponse(BaseModel):
+    symbol: str
+    open: float
+    high: float
+    low: float
+    price: float
+    volume: int
+    latest_trading_day: str
+    previous_close: float
+    change: float
+    change_percent: str
+
+class IntradayDataResponse(BaseModel):
+    symbol: str
+    interval: str
+    data: List[Dict]
+
+class SymbolSearchResponse(BaseModel):
+    symbol: str
+    name: str
+    type: str
+    region: str
+    market_open: str
+    market_close: str
+    timezone: str
+    currency: str
+    match_score: float
+
+@router.get("/quote-detailed/{symbol}", response_model=DetailedQuoteResponse)
+async def get_detailed_quote(symbol: str):
+    """Get detailed quote information including OHLC, volume, and change data."""
+    async with MarketDataService() as service:
+        quote_data = await service.get_alpha_vantage_quote_detailed(symbol)
+        
+        if quote_data is None:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Detailed quote not found for symbol {symbol}"
+            )
+        
+        return DetailedQuoteResponse(**quote_data)
+
+@router.get("/intraday/{symbol}", response_model=IntradayDataResponse)
+async def get_intraday_data(symbol: str, interval: str = "5min"):
+    """
+    Get intraday price data.
+    
+    Args:
+        symbol: Stock symbol (e.g., 'AAPL')
+        interval: Time interval (1min, 5min, 15min, 30min, 60min)
+    """
+    valid_intervals = ['1min', '5min', '15min', '30min', '60min']
+    if interval not in valid_intervals:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid interval. Must be one of: {', '.join(valid_intervals)}"
+        )
+    
+    async with MarketDataService() as service:
+        intraday_data = await service.get_alpha_vantage_intraday(symbol, interval)
+        
+        if intraday_data is None:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Intraday data not found for symbol {symbol}"
+            )
+        
+        return IntradayDataResponse(**intraday_data)
+
+@router.get("/search/{keywords}", response_model=List[SymbolSearchResponse])
+async def search_symbols(keywords: str):
+    """Search for stock symbols by keywords."""
+    async with MarketDataService() as service:
+        search_results = await service.search_alpha_vantage_symbols(keywords)
+        
+        if search_results is None:
+            raise HTTPException(
+                status_code=404,
+                detail=f"No symbols found for keywords: {keywords}"
+            )
+        
+        return [SymbolSearchResponse(**result) for result in search_results]
+
+@router.get("/live-quotes")
+async def get_live_quotes(symbols: str):
+    """
+    Get live quotes for multiple symbols (comma-separated).
+    Example: /live-quotes?symbols=AAPL,GOOGL,MSFT
+    """
+    symbol_list = [s.strip().upper() for s in symbols.split(',')]
+    
+    if len(symbol_list) > 10:  # Limit to prevent API abuse
+        raise HTTPException(
+            status_code=400,
+            detail="Maximum 10 symbols allowed per request"
+        )
+    
+    results = []
+    async with MarketDataService() as service:
+        for symbol in symbol_list:
+            try:
+                quote_data = await service.get_alpha_vantage_quote_detailed(symbol)
+                if quote_data:
+                    results.append({
+                        "symbol": symbol,
+                        "price": quote_data["price"],
+                        "change": quote_data["change"],
+                        "change_percent": quote_data["change_percent"],
+                        "volume": quote_data["volume"],
+                        "timestamp": datetime.now().isoformat()
+                    })
+            except Exception as e:
+                print(f"Error fetching quote for {symbol}: {e}")
+                continue
+    
+    return {"quotes": results, "total": len(results)}
