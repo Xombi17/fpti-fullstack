@@ -34,7 +34,7 @@ app.layout = dbc.Container([
     # Header
     dbc.Row([
         dbc.Col([
-            html.H1("FPTI - Financial Portfolio Tracking Interface", 
+            html.H1("Financial Portfolio Dashboard", 
                    className="text-center mb-4"),
             html.Hr()
         ])
