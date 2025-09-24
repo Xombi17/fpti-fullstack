@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  fpti-backend:
+    build: .
+    command: python backend/main.py
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=sqlite:///./data/fpti.db
+      - DEBUG=True
+    volumes:
+      - ./data:/app/data
+    networks:
+      - fpti-network
+
+  fpti-frontend:
+    build: .
+    command: python frontend/app.py
+    ports:
+      - "8050:8050"
+    environment:
+      - DASH_HOST=0.0.0.0
+      - DASH_PORT=8050
+      - DASH_DEBUG=True
+    depends_on:
+      - fpti-backend
+    networks:
+      - fpti-network
+
+networks:
+  fpti-network:
+    driver: bridge
+
+volumes:
+  fpti-data:
