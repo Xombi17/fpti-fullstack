@@ -14,8 +14,13 @@ import json
 # Initialize Dash app
 app = dash.Dash(
     __name__,
-    external_stylesheets=[dbc.themes.BOOTSTRAP, dbc.icons.FONT_AWESOME],
-    suppress_callback_exceptions=True
+    external_stylesheets=[
+        dbc.themes.BOOTSTRAP, 
+        dbc.icons.FONT_AWESOME,
+        "https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+    ],
+    suppress_callback_exceptions=True,
+    assets_folder='assets'
 )
 
 # API Configuration
@@ -31,25 +36,53 @@ app.layout = dbc.Container([
         n_intervals=0
     ),
     
-    # Header
-    dbc.Row([
-        dbc.Col([
-            html.H1("Financial Portfolio Dashboard", 
-                   className="text-center mb-4"),
-            html.Hr()
+    # Modern Header
+    html.Div([
+        dbc.Container([
+            dbc.Row([
+                dbc.Col([
+                    html.H1("FPTI", className="mb-0"),
+                    html.P("Financial Portfolio Tracking Interface", className="subtitle mb-0")
+                ], className="text-center")
+            ])
         ])
-    ]),
+    ], className="modern-header"),
     
-    # Navigation Tabs
+    # Modern Navigation Tabs
     dbc.Row([
         dbc.Col([
             dbc.Tabs([
-                dbc.Tab(label="Dashboard", tab_id="dashboard"),
-                dbc.Tab(label="Portfolio Analysis", tab_id="analysis"),
-                dbc.Tab(label="Transactions", tab_id="transactions"),
-                dbc.Tab(label="Monte Carlo", tab_id="monte-carlo"),
-                dbc.Tab(label="Market Data", tab_id="market-data"),
-            ], id="tabs", active_tab="dashboard")
+                dbc.Tab([
+                    html.Div([
+                        html.I(className="fas fa-chart-line me-2"),
+                        "Dashboard"
+                    ])
+                ], tab_id="dashboard"),
+                dbc.Tab([
+                    html.Div([
+                        html.I(className="fas fa-analytics me-2"),
+                        "Analysis"
+                    ])
+                ], tab_id="analysis"),
+                dbc.Tab([
+                    html.Div([
+                        html.I(className="fas fa-exchange-alt me-2"),
+                        "Transactions"
+                    ])
+                ], tab_id="transactions"),
+                dbc.Tab([
+                    html.Div([
+                        html.I(className="fas fa-dice me-2"),
+                        "Monte Carlo"
+                    ])
+                ], tab_id="monte-carlo"),
+                dbc.Tab([
+                    html.Div([
+                        html.I(className="fas fa-chart-bar me-2"),
+                        "Market Data"
+                    ])
+                ], tab_id="market-data"),
+            ], id="tabs", active_tab="dashboard", className="nav-tabs")
         ])
     ], className="mb-4"),
     
@@ -64,80 +97,86 @@ app.layout = dbc.Container([
 # Dashboard Tab Content
 def create_dashboard_layout():
     return [
+        # Modern Portfolio Summary Cards
         dbc.Row([
-            # Portfolio Summary Cards
             dbc.Col([
                 dbc.Card([
                     dbc.CardBody([
+                        html.Div([
+                            html.I(className="fas fa-wallet", style={"color": "#27ae60"})
+                        ], className="metric-icon success"),
                         html.H4("Total Portfolio Value", className="card-title"),
-                        html.H2(id="total-value", className="text-success"),
-                        html.P(id="total-pnl", className="card-text")
+                        html.H2(id="total-value", className="metric-value text-success"),
+                        html.Div(id="total-pnl", className="metric-change")
                     ])
-                ])
+                ], className="modern-card success fade-in")
             ], width=3),
             
             dbc.Col([
                 dbc.Card([
                     dbc.CardBody([
+                        html.Div([
+                            html.I(className="fas fa-chart-pie", style={"color": "#3498db"})
+                        ], className="metric-icon info"),
                         html.H4("Number of Holdings", className="card-title"),
-                        html.H2(id="total-holdings", className="text-info"),
-                        html.P("Active Positions", className="card-text")
+                        html.H2(id="total-holdings", className="metric-value text-info"),
+                        html.Div("Active Positions", className="metric-change")
                     ])
-                ])
+                ], className="modern-card info fade-in")
             ], width=3),
             
             dbc.Col([
                 dbc.Card([
                     dbc.CardBody([
+                        html.Div([
+                            html.I(className="fas fa-arrow-trend-up", style={"color": "#f39c12"})
+                        ], className="metric-icon warning"),
                         html.H4("Today's Change", className="card-title"),
-                        html.H2(id="daily-change", className="text-warning"),
-                        html.P(id="daily-change-percent", className="card-text")
+                        html.H2(id="daily-change", className="metric-value text-warning"),
+                        html.Div(id="daily-change-percent", className="metric-change")
                     ])
-                ])
+                ], className="modern-card warning fade-in")
             ], width=3),
             
             dbc.Col([
                 dbc.Card([
                     dbc.CardBody([
+                        html.Div([
+                            html.I(className="fas fa-trophy", style={"color": "#e74c3c"})
+                        ], className="metric-icon primary"),
                         html.H4("Best Performer", className="card-title"),
-                        html.H2(id="best-performer", className="text-success"),
-                        html.P(id="best-performer-change", className="card-text")
+                        html.H2(id="best-performer", className="metric-value text-success"),
+                        html.Div(id="best-performer-change", className="metric-change")
                     ])
-                ])
+                ], className="modern-card fade-in")
             ], width=3),
         ], className="mb-4"),
         
         dbc.Row([
             # Portfolio Value Chart
             dbc.Col([
-                dbc.Card([
-                    dbc.CardBody([
-                        html.H4("Portfolio Value Over Time"),
-                        dcc.Graph(id="portfolio-value-chart")
-                    ])
-                ])
+                html.Div([
+                    html.H4("Portfolio Value Over Time", className="chart-title"),
+                    dcc.Graph(id="portfolio-value-chart", config={'displayModeBar': False})
+                ], className="chart-container slide-up")
             ], width=8),
             
             # Asset Allocation Pie Chart
             dbc.Col([
-                dbc.Card([
-                    dbc.CardBody([
-                        html.H4("Asset Allocation"),
-                        dcc.Graph(id="allocation-pie-chart")
-                    ])
-                ])
+                html.Div([
+                    html.H4("Asset Allocation", className="chart-title"),
+                    dcc.Graph(id="allocation-pie-chart", config={'displayModeBar': False})
+                ], className="chart-container slide-up")
             ], width=4),
         ], className="mb-4"),
         
         dbc.Row([
             # Holdings Table
             dbc.Col([
-                dbc.Card([
-                    dbc.CardBody([
-                        html.H4("Current Holdings"),
-                        html.Div(id="holdings-table")
-                    ])
-                ])
+                html.Div([
+                    html.H4("Current Holdings", className="chart-title"),
+                    html.Div(id="holdings-table", className="modern-table")
+                ], className="chart-container slide-up")
             ])
         ])
     ]
@@ -147,41 +186,33 @@ def create_analysis_layout():
     return [
         dbc.Row([
             dbc.Col([
-                dbc.Card([
-                    dbc.CardBody([
-                        html.H4("Performance Metrics"),
-                        html.Div(id="performance-metrics")
-                    ])
-                ])
+                html.Div([
+                    html.H4("Performance Metrics", className="chart-title"),
+                    html.Div(id="performance-metrics")
+                ], className="chart-container fade-in")
             ], width=6),
             
             dbc.Col([
-                dbc.Card([
-                    dbc.CardBody([
-                        html.H4("Risk Analysis"),
-                        html.Div(id="risk-metrics")
-                    ])
-                ])
+                html.Div([
+                    html.H4("Risk Analysis", className="chart-title"),
+                    html.Div(id="risk-metrics")
+                ], className="chart-container fade-in")
             ], width=6),
         ], className="mb-4"),
         
         dbc.Row([
             dbc.Col([
-                dbc.Card([
-                    dbc.CardBody([
-                        html.H4("Sector Allocation"),
-                        dcc.Graph(id="sector-allocation-chart")
-                    ])
-                ])
+                html.Div([
+                    html.H4("Sector Allocation", className="chart-title"),
+                    dcc.Graph(id="sector-allocation-chart", config={'displayModeBar': False})
+                ], className="chart-container slide-up")
             ], width=6),
             
             dbc.Col([
-                dbc.Card([
-                    dbc.CardBody([
-                        html.H4("Asset Correlation Matrix"),
-                        dcc.Graph(id="correlation-matrix")
-                    ])
-                ])
+                html.Div([
+                    html.H4("Asset Correlation Matrix", className="chart-title"),
+                    dcc.Graph(id="correlation-matrix", config={'displayModeBar': False})
+                ], className="chart-container slide-up")
             ], width=6),
         ])
     ]
@@ -191,121 +222,120 @@ def create_transactions_layout():
     return [
         dbc.Row([
             dbc.Col([
-                dbc.Card([
-                    dbc.CardBody([
-                        html.H4("Add New Transaction"),
-                        dbc.Form([
-                            dbc.Row([
-                                dbc.Col([
-                                    dbc.Label("Portfolio"),
-                                    dcc.Dropdown(
-                                        id="trans-portfolio-dropdown",
-                                        placeholder="Select Portfolio"
-                                    )
-                                ], width=6),
-                                dbc.Col([
-                                    dbc.Label("Asset Symbol"),
-                                    dbc.Input(
-                                        id="trans-symbol-input",
-                                        type="text",
-                                        placeholder="e.g., AAPL"
-                                    )
-                                ], width=6),
-                            ], className="mb-3"),
-                            dbc.Row([
-                                dbc.Col([
-                                    dbc.Label("Transaction Type"),
-                                    dcc.Dropdown(
-                                        id="trans-type-dropdown",
-                                        options=[
-                                            {"label": "Buy", "value": "BUY"},
-                                            {"label": "Sell", "value": "SELL"}
-                                        ],
-                                        placeholder="Select Type"
-                                    )
-                                ], width=4),
-                                dbc.Col([
-                                    dbc.Label("Quantity"),
-                                    dbc.Input(
-                                        id="trans-quantity-input",
-                                        type="number",
-                                        min=0,
-                                        step=0.01
-                                    )
-                                ], width=4),
-                                dbc.Col([
-                                    dbc.Label("Price per Share"),
-                                    dbc.Input(
-                                        id="trans-price-input",
-                                        type="number",
-                                        min=0,
-                                        step=0.01
-                                    )
-                                ], width=4),
-                            ], className="mb-3"),
-                            dbc.Row([
-                                dbc.Col([
-                                    dbc.Label("Transaction Date"),
-                                    dcc.DatePickerSingle(
-                                        id="trans-date-picker",
-                                        date=datetime.now().date(),
-                                        display_format="YYYY-MM-DD"
-                                    )
-                                ], width=6),
-                                dbc.Col([
-                                    html.Br(),
-                                    dbc.Button(
-                                        "Add Transaction",
-                                        id="add-transaction-btn",
-                                        color="primary",
-                                        className="mt-2"
-                                    )
-                                ], width=6),
-                            ], className="mb-3"),
-                        ])
+                html.Div([
+                    html.H4("Add New Transaction", className="chart-title"),
+                    dbc.Form([
+                        dbc.Row([
+                            dbc.Col([
+                                dbc.Label("Portfolio"),
+                                dcc.Dropdown(
+                                    id="trans-portfolio-dropdown",
+                                    placeholder="Select Portfolio",
+                                    className="modern-input"
+                                )
+                            ], width=6),
+                            dbc.Col([
+                                dbc.Label("Asset Symbol"),
+                                dbc.Input(
+                                    id="trans-symbol-input",
+                                    type="text",
+                                    placeholder="e.g., AAPL",
+                                    className="modern-input"
+                                )
+                            ], width=6),
+                        ], className="mb-3"),
+                        dbc.Row([
+                            dbc.Col([
+                                dbc.Label("Transaction Type"),
+                                dcc.Dropdown(
+                                    id="trans-type-dropdown",
+                                    options=[
+                                        {"label": "Buy", "value": "BUY"},
+                                        {"label": "Sell", "value": "SELL"}
+                                    ],
+                                    placeholder="Select Type",
+                                    className="modern-input"
+                                )
+                            ], width=4),
+                            dbc.Col([
+                                dbc.Label("Quantity"),
+                                dbc.Input(
+                                    id="trans-quantity-input",
+                                    type="number",
+                                    min=0,
+                                    step=0.01,
+                                    className="modern-input"
+                                )
+                            ], width=4),
+                            dbc.Col([
+                                dbc.Label("Price per Share"),
+                                dbc.Input(
+                                    id="trans-price-input",
+                                    type="number",
+                                    min=0,
+                                    step=0.01,
+                                    className="modern-input"
+                                )
+                            ], width=4),
+                        ], className="mb-3"),
+                        dbc.Row([
+                            dbc.Col([
+                                dbc.Label("Transaction Date"),
+                                dcc.DatePickerSingle(
+                                    id="trans-date-picker",
+                                    date=datetime.now().date(),
+                                    display_format="YYYY-MM-DD"
+                                )
+                            ], width=6),
+                            dbc.Col([
+                                html.Br(),
+                                dbc.Button(
+                                    "Add Transaction",
+                                    id="add-transaction-btn",
+                                    className="modern-button mt-2"
+                                )
+                            ], width=6),
+                        ], className="mb-3"),
                     ])
-                ])
+                ], className="chart-container fade-in")
             ])
         ], className="mb-4"),
         
         dbc.Row([
             dbc.Col([
-                dbc.Card([
-                    dbc.CardBody([
-                        html.H4("Transaction History"),
-                        dbc.Row([
-                            dbc.Col([
-                                dcc.Dropdown(
-                                    id="trans-filter-portfolio",
-                                    placeholder="Filter by Portfolio",
-                                    className="mb-3"
-                                )
-                            ], width=4),
-                            dbc.Col([
-                                dcc.Dropdown(
-                                    id="trans-filter-type",
-                                    options=[
-                                        {"label": "All", "value": "ALL"},
-                                        {"label": "Buy", "value": "BUY"},
-                                        {"label": "Sell", "value": "SELL"}
-                                    ],
-                                    value="ALL",
-                                    className="mb-3"
-                                )
-                            ], width=4),
-                            dbc.Col([
-                                dbc.Button(
-                                    "Refresh",
-                                    id="refresh-transactions-btn",
-                                    color="secondary",
-                                    className="mb-3"
-                                )
-                            ], width=4),
-                        ]),
-                        html.Div(id="transactions-table"),
-                        html.Div(id="transaction-add-result", className="mt-3")
-                    ])
-                ])
+                html.Div([
+                    html.H4("Transaction History", className="chart-title"),
+                    dbc.Row([
+                        dbc.Col([
+                            dcc.Dropdown(
+                                id="trans-filter-portfolio",
+                                placeholder="Filter by Portfolio",
+                                className="modern-input mb-3"
+                            )
+                        ], width=4),
+                        dbc.Col([
+                            dcc.Dropdown(
+                                id="trans-filter-type",
+                                options=[
+                                    {"label": "All", "value": "ALL"},
+                                    {"label": "Buy", "value": "BUY"},
+                                    {"label": "Sell", "value": "SELL"}
+                                ],
+                                value="ALL",
+                                className="modern-input mb-3"
+                            )
+                        ], width=4),
+                        dbc.Col([
+                            dbc.Button(
+                                "Refresh",
+                                id="refresh-transactions-btn",
+                                className="modern-button mb-3"
+                            )
+                        ], width=4),
+                    ]),
+                    html.Div(id="transactions-table", className="modern-table"),
+                    html.Div(id="transaction-add-result", className="mt-3")
+                ], className="chart-container slide-up")
             ])
         ])
     ]
@@ -584,15 +614,33 @@ def update_portfolio_chart(portfolio_data):
             y=values,
             mode='lines',
             name='Portfolio Value',
-            line=dict(color='#28a745', width=2)
+            line={'color': '#667eea', 'width': 3},
+            fill='tonexty',
+            fillcolor='rgba(102, 126, 234, 0.1)'
         ))
         
         fig.update_layout(
-            title="Portfolio Value Trend",
-            xaxis_title="Date",
-            yaxis_title="Value ($)",
+            paper_bgcolor='rgba(0,0,0,0)',
+            plot_bgcolor='rgba(0,0,0,0)',
+            font={'family': 'Inter, sans-serif', 'color': '#343a40'},
+            xaxis={
+                'title': {'text': 'Date', 'font': {'size': 14, 'color': '#6c757d'}},
+                'showgrid': True,
+                'gridcolor': 'rgba(0,0,0,0.1)',
+                'showline': False,
+                'zeroline': False
+            },
+            yaxis={
+                'title': {'text': 'Portfolio Value ($)', 'font': {'size': 14, 'color': '#6c757d'}},
+                'showgrid': True,
+                'gridcolor': 'rgba(0,0,0,0.1)',
+                'showline': False,
+                'zeroline': False,
+                'tickformat': '$,.0f'
+            },
             hovermode='x unified',
-            showlegend=False
+            showlegend=False,
+            margin={'l': 40, 'r': 40, 't': 40, 'b': 40}
         )
         
         return fig
@@ -617,10 +665,33 @@ def update_allocation_chart(portfolio_data):
     fig = px.pie(
         values=allocation_data['Percentage'],
         names=allocation_data['Asset Type'],
-        title="Asset Allocation"
+        color_discrete_sequence=[
+            '#667eea', '#764ba2', '#f093fb', '#f5576c', 
+            '#4ecdc4', '#45b7d1', '#96ceb4', '#ffeaa7'
+        ]
     )
     
-    fig.update_traces(textposition='inside', textinfo='percent+label')
+    fig.update_traces(
+        textposition='inside', 
+        textinfo='percent+label',
+        hovertemplate='<b>%{label}</b><br>Value: $%{value:,.0f}<br>Percentage: %{percent}<extra></extra>',
+        textfont={'size': 12, 'color': 'white', 'family': 'Inter, sans-serif'}
+    )
+    
+    fig.update_layout(
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)',
+        font={'family': 'Inter, sans-serif', 'color': '#343a40'},
+        showlegend=True,
+        legend={
+            'orientation': 'v',
+            'yanchor': 'middle',
+            'y': 0.5,
+            'xanchor': 'left',
+            'x': 1.05
+        },
+        margin={'l': 20, 'r': 80, 't': 20, 'b': 20}
+    )
     
     return fig
 
@@ -711,11 +782,11 @@ def update_holdings_table(portfolio_data):
         columns=[
             {'name': 'Symbol', 'id': 'Symbol'},
             {'name': 'Shares', 'id': 'Shares', 'type': 'numeric'},
-            {'name': 'Avg Cost', 'id': 'Avg Cost', 'type': 'numeric', 'format': '$,.2f'},
-            {'name': 'Current Price', 'id': 'Current Price', 'type': 'numeric', 'format': '$,.2f'},
-            {'name': 'Market Value', 'id': 'Market Value', 'type': 'numeric', 'format': '$,.0f'},
-            {'name': 'P&L', 'id': 'P&L', 'type': 'numeric', 'format': '$,.0f'},
-            {'name': 'P&L %', 'id': 'P&L %', 'type': 'numeric', 'format': '.2f%'},
+            {'name': 'Avg Cost', 'id': 'Avg Cost', 'type': 'numeric', 'format': {'specifier': '$,.2f'}},
+            {'name': 'Current Price', 'id': 'Current Price', 'type': 'numeric', 'format': {'specifier': '$,.2f'}},
+            {'name': 'Market Value', 'id': 'Market Value', 'type': 'numeric', 'format': {'specifier': '$,.0f'}},
+            {'name': 'P&L', 'id': 'P&L', 'type': 'numeric', 'format': {'specifier': '$,.0f'}},
+            {'name': 'P&L %', 'id': 'P&L %', 'type': 'numeric', 'format': {'specifier': '.2%'}},
         ],
         style_cell={'textAlign': 'center'},
         style_data_conditional=[
@@ -789,14 +860,21 @@ def run_monte_carlo_simulation(n_clicks, target_value, years, monthly_contributi
             fig.add_trace(go.Histogram(
                 x=mock_values,
                 nbinsx=50,
-                name='Simulation Results'
+                name='Simulation Results',
+                marker={'color': '#667eea', 'opacity': 0.7},
+                hovertemplate='Value Range: $%{x:,.0f}<br>Count: %{y}<extra></extra>'
             ))
             
-            fig.add_vline(x=target_value, line_dash="dash", line_color="red",
-                         annotation_text=f"Target: ${target_value:,}")
+            fig.add_vline(
+                x=target_value, 
+                line={'dash': "dash", 'color': "#e74c3c", 'width': 2},
+                annotation={'text': f"Target: ${target_value:,}", 'font': {'color': '#e74c3c', 'size': 12}}
+            )
             
             fig.update_layout(
-                title="Monte Carlo Simulation Results",
+                paper_bgcolor='rgba(0,0,0,0)',
+                plot_bgcolor='rgba(0,0,0,0)',
+                font={'family': 'Inter, sans-serif', 'color': '#343a40'},
                 xaxis_title="Portfolio Value ($)",
                 yaxis_title="Frequency",
                 showlegend=False
@@ -915,8 +993,8 @@ def update_transactions_table(n_clicks, portfolio_filter, type_filter, add_resul
                 {"name": "Symbol", "id": "Symbol"},
                 {"name": "Type", "id": "Type"},
                 {"name": "Quantity", "id": "Quantity", "type": "numeric"},
-                {"name": "Price", "id": "Price", "type": "numeric", "format": "$,.2f"},
-                {"name": "Total", "id": "Total", "type": "numeric", "format": "$,.2f"},
+                {"name": "Price", "id": "Price", "type": "numeric", "format": {"specifier": "$,.2f"}},
+                {"name": "Total", "id": "Total", "type": "numeric", "format": {"specifier": "$,.2f"}},
             ],
             style_cell={'textAlign': 'center'},
             style_data_conditional=[
@@ -1001,7 +1079,7 @@ def update_watchlist(n):
         data=df.to_dict('records'),
         columns=[
             {"name": "Symbol", "id": "Symbol"},
-            {"name": "Price", "id": "Price", "type": "numeric", "format": "$,.2f"},
+            {"name": "Price", "id": "Price", "type": "numeric", "format": {"specifier": "$,.2f"}},
             {"name": "Change", "id": "Change"},
             {"name": "Change %", "id": "Change %"},
         ],
@@ -1096,12 +1174,32 @@ def update_sector_allocation(portfolio_data):
         fig = px.pie(
             values=values,
             names=sectors,
-            title="Sector Allocation",
-            color_discrete_sequence=px.colors.qualitative.Set3
+            color_discrete_sequence=[
+                '#667eea', '#764ba2', '#f093fb', '#f5576c', '#4ecdc4'
+            ]
         )
         
-        fig.update_traces(textposition='inside', textinfo='percent+label')
-        fig.update_layout(showlegend=True)
+        fig.update_traces(
+            textposition='inside', 
+            textinfo='percent+label',
+            hovertemplate='<b>%{label}</b><br>Allocation: %{value}%<br>Percentage: %{percent}<extra></extra>',
+            textfont={'size': 11, 'color': 'white', 'family': 'Inter, sans-serif'}
+        )
+        
+        fig.update_layout(
+            paper_bgcolor='rgba(0,0,0,0)',
+            plot_bgcolor='rgba(0,0,0,0)',
+            font={'family': 'Inter, sans-serif', 'color': '#343a40'},
+            showlegend=True,
+            legend={
+                'orientation': 'v',
+                'yanchor': 'middle',
+                'y': 0.5,
+                'xanchor': 'left',
+                'x': 1.05
+            },
+            margin={'l': 20, 'r': 80, 't': 20, 'b': 20}
+        )
         
         return fig
         
@@ -1128,15 +1226,23 @@ def update_correlation_matrix(portfolio_data):
             correlation_data,
             x=assets,
             y=assets,
-            color_continuous_scale='RdBu',
+            color_continuous_scale=['#667eea', '#ffffff', '#e74c3c'],
             aspect="auto",
-            title="Asset Correlation Matrix"
+            text_auto='.2f'
         )
         
         fig.update_layout(
-            xaxis={'side': 'bottom'},
-            width=400,
-            height=400
+            paper_bgcolor='rgba(0,0,0,0)',
+            plot_bgcolor='rgba(0,0,0,0)',
+            font={'family': 'Inter, sans-serif', 'color': '#343a40'},
+            xaxis={'side': 'bottom', 'showgrid': False},
+            yaxis={'showgrid': False},
+            margin={'l': 20, 'r': 20, 't': 20, 'b': 20}
+        )
+        
+        fig.update_traces(
+            hovertemplate='<b>%{x} vs %{y}</b><br>Correlation: %{z:.2f}<extra></extra>',
+            textfont={'size': 10, 'family': 'Inter, sans-serif'}
         )
         
         return fig

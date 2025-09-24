@@ -28,11 +28,12 @@ python app.py
 
 ## 🎯 Features
 
-- **Portfolio Dashboard**: Real-time portfolio valuation and performance tracking
-- **Interactive Charts**: Asset allocation, performance trends, holdings analysis  
-- **Monte Carlo Simulations**: Retirement planning and risk assessment
-- **Market Data Integration**: Live price updates from Yahoo Finance
-- **Transaction Management**: Complete portfolio transaction history
+- **Modern Professional UI/UX**: Sleek financial dashboard with animations, gradients, and responsive design
+- **Portfolio Dashboard**: Real-time portfolio valuation with animated metric cards and professional styling
+- **Interactive Charts**: Beautiful asset allocation, performance trends, and correlation matrices with modern color schemes
+- **Monte Carlo Simulations**: Interactive retirement planning with professional histogram visualizations
+- **Market Data Integration**: Live price updates with elegant data tables and hover effects
+- **Transaction Management**: Intuitive forms with modern styling and smooth animations
 
 ## 📁 Project Structure
 
@@ -51,9 +52,10 @@ fpti/
 ## 🛠️ Tech Stack
 
 - **Backend**: FastAPI, SQLAlchemy, Pandas
-- **Frontend**: Plotly Dash, Bootstrap Components
-- **Database**: SQLite
+- **Frontend**: Plotly Dash, Bootstrap Components, Custom CSS3
+- **Database**: SQLite (Production-ready ACID compliant)
 - **APIs**: Yahoo Finance market data
+- **UI/UX**: Modern CSS Grid, Inter Font, Professional Color Palette, Smooth Animations
 
 ## 🛑 To Stop Servers
 
