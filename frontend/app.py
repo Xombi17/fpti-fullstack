@@ -694,29 +694,31 @@ def update_portfolio_chart(portfolio_data):
             y=values,
             mode='lines',
             name='Portfolio Value',
-            line={'color': '#667eea', 'width': 3},
+            line={'color': '#0071f3', 'width': 3},
             fill='tonexty',
-            fillcolor='rgba(102, 126, 234, 0.1)'
+            fillcolor='rgba(0, 113, 243, 0.2)'
         ))
         
         fig.update_layout(
             paper_bgcolor='rgba(0,0,0,0)',
             plot_bgcolor='rgba(0,0,0,0)',
-            font={'family': 'Inter, sans-serif', 'color': '#343a40'},
+            font={'family': 'Inter, sans-serif', 'color': '#e4e4e7'},
             xaxis={
-                'title': {'text': 'Date', 'font': {'size': 14, 'color': '#6c757d'}},
+                'title': {'text': 'Date', 'font': {'size': 14, 'color': '#a1a1aa'}},
                 'showgrid': True,
-                'gridcolor': 'rgba(0,0,0,0.1)',
-                'showline': False,
-                'zeroline': False
-            },
-            yaxis={
-                'title': {'text': 'Portfolio Value ($)', 'font': {'size': 14, 'color': '#6c757d'}},
-                'showgrid': True,
-                'gridcolor': 'rgba(0,0,0,0.1)',
+                'gridcolor': 'rgba(161, 161, 170, 0.2)',
                 'showline': False,
                 'zeroline': False,
-                'tickformat': '$,.0f'
+                'color': '#e4e4e7'
+            },
+            yaxis={
+                'title': {'text': 'Portfolio Value ($)', 'font': {'size': 14, 'color': '#a1a1aa'}},
+                'showgrid': True,
+                'gridcolor': 'rgba(161, 161, 170, 0.2)',
+                'showline': False,
+                'zeroline': False,
+                'tickformat': '$,.0f',
+                'color': '#e4e4e7'
             },
             hovermode='x unified',
             showlegend=False,
@@ -761,14 +763,15 @@ def update_allocation_chart(portfolio_data):
     fig.update_layout(
         paper_bgcolor='rgba(0,0,0,0)',
         plot_bgcolor='rgba(0,0,0,0)',
-        font={'family': 'Inter, sans-serif', 'color': '#343a40'},
+        font={'family': 'Inter, sans-serif', 'color': '#e4e4e7'},
         showlegend=True,
         legend={
             'orientation': 'v',
             'yanchor': 'middle',
             'y': 0.5,
             'xanchor': 'left',
-            'x': 1.05
+            'x': 1.05,
+            'font': {'color': '#e4e4e7'}
         },
         margin={'l': 20, 'r': 80, 't': 20, 'b': 20}
     )
@@ -954,7 +957,7 @@ def run_monte_carlo_simulation(n_clicks, target_value, years, monthly_contributi
             fig.update_layout(
                 paper_bgcolor='rgba(0,0,0,0)',
                 plot_bgcolor='rgba(0,0,0,0)',
-                font={'family': 'Inter, sans-serif', 'color': '#343a40'},
+                font={'family': 'Inter, sans-serif', 'color': '#e4e4e7'},
                 xaxis_title="Portfolio Value ($)",
                 yaxis_title="Frequency",
                 showlegend=False
@@ -1269,7 +1272,7 @@ def update_sector_allocation(portfolio_data):
         fig.update_layout(
             paper_bgcolor='rgba(0,0,0,0)',
             plot_bgcolor='rgba(0,0,0,0)',
-            font={'family': 'Inter, sans-serif', 'color': '#343a40'},
+            font={'family': 'Inter, sans-serif', 'color': '#e4e4e7'},
             showlegend=True,
             legend={
                 'orientation': 'v',
@@ -1313,8 +1316,8 @@ def update_correlation_matrix(portfolio_data):
         
         fig.update_layout(
             paper_bgcolor='rgba(0,0,0,0)',
-            plot_bgcolor='rgba(0,0,0,0)',
-            font={'family': 'Inter, sans-serif', 'color': '#343a40'},
+            plot_backgroundColor='rgba(0,0,0,0)',
+            font={'family': 'Inter, sans-serif', 'color': '#e4e4e7'},
             xaxis={'side': 'bottom', 'showgrid': False},
             yaxis={'showgrid': False},
             margin={'l': 20, 'r': 20, 't': 20, 'b': 20}
@@ -1322,7 +1325,7 @@ def update_correlation_matrix(portfolio_data):
         
         fig.update_traces(
             hovertemplate='<b>%{x} vs %{y}</b><br>Correlation: %{z:.2f}<extra></extra>',
-            textfont={'size': 10, 'family': 'Inter, sans-serif'}
+            textfont={'size': 10, 'family': 'Inter, sans-serif', 'color': '#e4e4e7'}
         )
         
         return fig
