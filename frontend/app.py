@@ -2407,6 +2407,157 @@ def update_transactions_table(n_clicks, portfolio_filter, type_filter, add_resul
     except Exception as e:
         return html.P(f"Error loading transactions: {str(e)}")
 
+# Portfolio Analysis Helper Functions
+def calculate_portfolio_holdings():
+    """Calculate current portfolio holdings from transactions."""
+    holdings = {}
+    
+    for transaction in MOCK_TRANSACTIONS:
+        symbol = transaction['asset']['symbol']
+        quantity = transaction['quantity']
+        
+        if symbol not in holdings:
+            holdings[symbol] = 0
+        
+        if transaction['transaction_type'] == 'BUY':
+            holdings[symbol] += quantity
+        elif transaction['transaction_type'] == 'SELL':
+            holdings[symbol] -= quantity
+    
+    # Remove symbols with zero holdings
+    holdings = {symbol: qty for symbol, qty in holdings.items() if qty > 0}
+    return holdings
+
+def calculate_portfolio_value():
+    """Calculate total portfolio value using current holdings and live prices."""
+    holdings = calculate_portfolio_holdings()
+    total_value = 0
+    portfolio_details = []
+    
+    for symbol, quantity in holdings.items():
+        try:
+            # Convert Indian stock names to proper Yahoo format
+            yahoo_symbol = symbol
+            if symbol in ['RELIANCE', 'TCS', 'INFY', 'HDFC', 'ICICIBANK']:
+                yahoo_symbol = f"{symbol}.NS"
+            
+            # Get current price using the enhanced fetch function
+            quote_data = fetch_yahoo_quote(yahoo_symbol)
+            if quote_data:
+                current_price = quote_data['price']
+                currency = quote_data.get('currency', 'USD')
+                
+                # Convert to INR if needed
+                if currency == 'USD':
+                    current_price_inr = current_price * 83  # USD to INR conversion
+                else:
+                    current_price_inr = current_price
+                
+                holding_value = quantity * current_price_inr
+                total_value += holding_value
+                
+                portfolio_details.append({
+                    'symbol': symbol,
+                    'quantity': quantity,
+                    'current_price': current_price,
+                    'current_price_inr': current_price_inr,
+                    'value': holding_value,
+                    'currency': currency
+                })
+        except Exception as e:
+            print(f"Error getting price for {symbol}: {e}")
+    
+    return total_value, portfolio_details
+
+def calculate_portfolio_performance():
+    """Calculate portfolio performance metrics."""
+    try:
+        holdings = calculate_portfolio_holdings()
+        total_invested = 0
+        current_value, portfolio_details = calculate_portfolio_value()
+        
+        # Calculate total invested amount from transactions
+        for transaction in MOCK_TRANSACTIONS:
+            symbol = transaction['asset']['symbol']
+            if symbol in holdings:  # Only count if we still hold the stock
+                if transaction['transaction_type'] == 'BUY':
+                    total_invested += transaction['quantity'] * transaction['price']
+                elif transaction['transaction_type'] == 'SELL':
+                    total_invested -= transaction['quantity'] * transaction['price']
+        
+        if total_invested > 0:
+            total_return = ((current_value - total_invested) / total_invested) * 100
+            
+            # Simple annualized return (assuming 1 year holding period)
+            annualized_return = total_return  # Simplified for demo
+            
+            # Mock volatility and other metrics for now
+            volatility = 15.5  # Would calculate from historical data
+            risk_free_rate = 4.0  # Current risk-free rate
+            sharpe_ratio = (annualized_return - risk_free_rate) / volatility if volatility > 0 else 0
+            
+            return {
+                'total_return': round(total_return, 2),
+                'annualized_return': round(annualized_return, 2),
+                'volatility': volatility,
+                'sharpe_ratio': round(sharpe_ratio, 2),
+                'max_drawdown': -8.5,  # Mock for now
+                'beta': 0.95,  # Mock for now
+                'total_invested': total_invested,
+                'current_value': current_value
+            }
+    except Exception as e:
+        print(f"Error calculating performance: {e}")
+    
+    return None
+
+def get_sector_mapping():
+    """Map stock symbols to sectors."""
+    return {
+        'AAPL': 'Technology',
+        'GOOGL': 'Technology', 
+        'MSFT': 'Technology',
+        'TSLA': 'Consumer Discretionary',
+        'NVDA': 'Technology',
+        'RELIANCE': 'Energy',
+        'RELIANCE.NS': 'Energy',
+        'TCS': 'Technology',
+        'TCS.NS': 'Technology',
+        'INFY': 'Technology',
+        'INFY.NS': 'Technology',
+        'HDFC': 'Financial Services',
+        'HDFC.NS': 'Financial Services',
+        'ICICIBANK': 'Financial Services',
+        'ICICIBANK.NS': 'Financial Services'
+    }
+
+def calculate_sector_allocation():
+    """Calculate sector allocation based on current holdings."""
+    holdings = calculate_portfolio_holdings()
+    _, portfolio_details = calculate_portfolio_value()
+    sector_mapping = get_sector_mapping()
+    
+    sector_values = {}
+    total_value = sum(detail['value'] for detail in portfolio_details)
+    
+    for detail in portfolio_details:
+        symbol = detail['symbol']
+        sector = sector_mapping.get(symbol, 'Other')
+        
+        if sector not in sector_values:
+            sector_values[sector] = 0
+        sector_values[sector] += detail['value']
+    
+    # Convert to percentages
+    if total_value > 0:
+        sector_percentages = {
+            sector: round((value / total_value) * 100, 1)
+            for sector, value in sector_values.items()
+        }
+        return sector_percentages
+    
+    return {}
+
 # Portfolio Analysis Callbacks
 @app.callback(
     Output('performance-metrics', 'children'),
@@ -2417,15 +2568,52 @@ def update_performance_metrics(portfolio_data):
         if not portfolio_data:
             return html.P("No portfolio data available")
         
-        # Mock performance calculations - would use real analytics API
-        metrics = [
-            {"metric": "Total Return", "value": "12.5%", "color": "success"},
-            {"metric": "Annualized Return", "value": "8.7%", "color": "success"},
-            {"metric": "Volatility", "value": "16.2%", "color": "warning"},
-            {"metric": "Sharpe Ratio", "value": "1.23", "color": "info"},
-            {"metric": "Max Drawdown", "value": "-8.5%", "color": "danger"},
-            {"metric": "Beta", "value": "0.95", "color": "secondary"}
-        ]
+        # Calculate real performance metrics
+        performance = calculate_portfolio_performance()
+        
+        if performance:
+            metrics = [
+                {
+                    "metric": "Total Return", 
+                    "value": f"{performance['total_return']:.1f}%", 
+                    "color": "success" if performance['total_return'] > 0 else "danger"
+                },
+                {
+                    "metric": "Annualized Return", 
+                    "value": f"{performance['annualized_return']:.1f}%", 
+                    "color": "success" if performance['annualized_return'] > 0 else "danger"
+                },
+                {
+                    "metric": "Volatility", 
+                    "value": f"{performance['volatility']:.1f}%", 
+                    "color": "warning"
+                },
+                {
+                    "metric": "Sharpe Ratio", 
+                    "value": f"{performance['sharpe_ratio']:.2f}", 
+                    "color": "info" if performance['sharpe_ratio'] > 1 else "secondary"
+                },
+                {
+                    "metric": "Max Drawdown", 
+                    "value": f"{performance['max_drawdown']:.1f}%", 
+                    "color": "danger"
+                },
+                {
+                    "metric": "Beta", 
+                    "value": f"{performance['beta']:.2f}", 
+                    "color": "secondary"
+                }
+            ]
+        else:
+            # Fallback metrics if calculation fails
+            metrics = [
+                {"metric": "Total Return", "value": "N/A", "color": "secondary"},
+                {"metric": "Annualized Return", "value": "N/A", "color": "secondary"},
+                {"metric": "Volatility", "value": "N/A", "color": "secondary"},
+                {"metric": "Sharpe Ratio", "value": "N/A", "color": "secondary"},
+                {"metric": "Max Drawdown", "value": "N/A", "color": "secondary"},
+                {"metric": "Beta", "value": "N/A", "color": "secondary"}
+            ]
         
         cards = []
         for metric in metrics:
@@ -2454,14 +2642,64 @@ def update_risk_metrics(portfolio_data):
         if not portfolio_data:
             return html.P("No portfolio data available")
         
-        # Mock risk calculations
+        # Calculate real risk metrics
+        current_value, portfolio_details = calculate_portfolio_value()
+        holdings = calculate_portfolio_holdings()
+        
+        # Calculate concentration risk
+        if portfolio_details:
+            max_position = max(detail['value'] for detail in portfolio_details)
+            concentration_pct = (max_position / current_value) * 100 if current_value > 0 else 0
+            
+            if concentration_pct > 40:
+                concentration_risk = ("High", "danger")
+            elif concentration_pct > 25:
+                concentration_risk = ("Medium", "warning") 
+            else:
+                concentration_risk = ("Low", "success")
+        else:
+            concentration_risk = ("N/A", "secondary")
+        
+        # Simple VaR calculation (2% of portfolio value)
+        var_95 = current_value * 0.02 if current_value > 0 else 0
+        
+        # Count liquid vs illiquid holdings (assume all stocks are liquid for now)
+        liquid_count = len([h for h in holdings.keys() if not h.endswith('.NS')])  # US stocks are more liquid
+        total_count = len(holdings)
+        liquidity_score = "High" if liquid_count / total_count > 0.5 else "Medium" if liquid_count > 0 else "Low"
+        liquidity_color = "success" if liquidity_score == "High" else "warning" if liquidity_score == "Medium" else "danger"
+        
         risk_metrics = [
-            {"metric": "Value at Risk (95%)", "value": "87,350", "color": "danger"},
-            {"metric": "Expected Shortfall", "value": "1,28,470", "color": "danger"},
-            {"metric": "Concentration Risk", "value": "Medium", "color": "warning"},
-            {"metric": "Liquidity Score", "value": "High", "color": "success"},
-            {"metric": "Correlation to S&P 500", "value": "0.87", "color": "info"},
-            {"metric": "Tracking Error", "value": "4.2%", "color": "secondary"}
+            {
+                "metric": "Value at Risk (95%)", 
+                "value": f"₹{var_95:,.0f}", 
+                "color": "danger"
+            },
+            {
+                "metric": "Expected Shortfall", 
+                "value": f"₹{var_95 * 1.5:,.0f}", 
+                "color": "danger"
+            },
+            {
+                "metric": "Concentration Risk", 
+                "value": concentration_risk[0], 
+                "color": concentration_risk[1]
+            },
+            {
+                "metric": "Liquidity Score", 
+                "value": liquidity_score, 
+                "color": liquidity_color
+            },
+            {
+                "metric": "Portfolio Diversity", 
+                "value": f"{len(holdings)} assets", 
+                "color": "info"
+            },
+            {
+                "metric": "Largest Position", 
+                "value": f"{concentration_pct:.1f}%", 
+                "color": "secondary"
+            }
         ]
         
         cards = []
@@ -2488,9 +2726,16 @@ def update_risk_metrics(portfolio_data):
 )
 def update_sector_allocation(portfolio_data):
     try:
-        # Mock sector allocation data
-        sectors = ['Technology', 'Healthcare', 'Financial Services', 'Consumer Goods', 'Energy']
-        values = [35, 20, 15, 20, 10]
+        # Calculate real sector allocation from current holdings
+        sector_percentages = calculate_sector_allocation()
+        
+        if not sector_percentages:
+            # Fallback if no data
+            sectors = ['No Data']
+            values = [100]
+        else:
+            sectors = list(sector_percentages.keys())
+            values = list(sector_percentages.values())
         
         fig = px.pie(
             values=values,
@@ -2537,9 +2782,15 @@ def update_correlation_matrix(portfolio_data):
     
     # Always return a working correlation matrix
     try:
-        # Use a fixed set of reliable assets
-        assets = ['AAPL', 'GOOGL', 'MSFT', 'TSLA']
-        print(f"DEBUG: Creating correlation matrix for: {assets}")
+        # Use real portfolio holdings
+        holdings = calculate_portfolio_holdings()
+        assets = list(holdings.keys())[:6]  # Limit to 6 assets for better visualization
+        
+        if not assets:
+            # Fallback to some basic assets if no holdings
+            assets = ['AAPL', 'GOOGL', 'MSFT', 'TSLA']
+        
+        print(f"DEBUG: Creating correlation matrix for portfolio holdings: {assets}")
         
         # Create correlation data directly in callback to avoid function call issues
         correlation_data = []
