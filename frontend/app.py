@@ -282,6 +282,77 @@ def get_mock_quote_data(symbol):
                 "currency": "USD"
             }
 
+# Mock data for portfolios and transactions
+MOCK_PORTFOLIOS = [
+    {"id": 1, "name": "Growth Portfolio"},
+    {"id": 2, "name": "Dividend Portfolio"},
+    {"id": 3, "name": "Tech Portfolio"}
+]
+
+# Global transaction storage - will persist during app session
+MOCK_TRANSACTIONS = [
+    {
+        "id": 1,
+        "portfolio_id": 1,
+        "portfolio": {"name": "Growth Portfolio"},
+        "asset": {"symbol": "AAPL"},
+        "transaction_type": "BUY",
+        "quantity": 50,
+        "price": 175.25,
+        "transaction_date": "2024-01-15T00:00:00"
+    },
+    {
+        "id": 2,
+        "portfolio_id": 1,
+        "portfolio": {"name": "Growth Portfolio"},
+        "asset": {"symbol": "GOOGL"},
+        "transaction_type": "BUY",
+        "quantity": 20,
+        "price": 142.80,
+        "transaction_date": "2024-01-20T00:00:00"
+    },
+    {
+        "id": 3,
+        "portfolio_id": 2,
+        "portfolio": {"name": "Dividend Portfolio"},
+        "asset": {"symbol": "RELIANCE"},
+        "transaction_type": "BUY",
+        "quantity": 100,
+        "price": 2450.50,
+        "transaction_date": "2024-02-01T00:00:00"
+    },
+    {
+        "id": 4,
+        "portfolio_id": 2,
+        "portfolio": {"name": "Dividend Portfolio"},
+        "asset": {"symbol": "TCS"},
+        "transaction_type": "BUY",
+        "quantity": 75,
+        "price": 3850.75,
+        "transaction_date": "2024-02-05T00:00:00"
+    },
+    {
+        "id": 5,
+        "portfolio_id": 3,
+        "portfolio": {"name": "Tech Portfolio"},
+        "asset": {"symbol": "MSFT"},
+        "transaction_type": "BUY",
+        "quantity": 30,
+        "price": 420.60,
+        "transaction_date": "2024-02-10T00:00:00"
+    },
+    {
+        "id": 6,
+        "portfolio_id": 1,
+        "portfolio": {"name": "Growth Portfolio"},
+        "asset": {"symbol": "AAPL"},
+        "transaction_type": "SELL",
+        "quantity": 10,
+        "price": 185.40,
+        "transaction_date": "2024-03-01T00:00:00"
+    }
+]
+
 def fetch_intraday_data(symbol, interval="5min"):
     """Fetch intraday data for a symbol using Yahoo Finance."""
     try:
@@ -2219,12 +2290,9 @@ def run_monte_carlo_simulation(n_clicks, target_value, years, monthly_contributi
 )
 def update_portfolio_dropdowns(n):
     try:
-        response = requests.get(f"{API_BASE_URL}/portfolios/")
-        if response.status_code == 200:
-            portfolios = response.json()
-            options = [{"label": p["name"], "value": p["id"]} for p in portfolios]
-            return options, [{"label": "All", "value": "ALL"}] + options
-        return [], [{"label": "All", "value": "ALL"}]
+        # Use mock portfolios instead of API call
+        options = [{"label": p["name"], "value": p["id"]} for p in MOCK_PORTFOLIOS]
+        return options, [{"label": "All", "value": "ALL"}] + options
     except Exception as e:
         print(f"Error loading portfolios: {e}")
         return [], [{"label": "All", "value": "ALL"}]
@@ -2244,25 +2312,27 @@ def add_transaction(n_clicks, portfolio_id, symbol, trans_type, quantity, price,
         return ""
     
     try:
-        # First, ensure asset exists
-        asset_data = {"symbol": symbol, "name": symbol, "asset_type": "STOCK"}
-        requests.post(f"{API_BASE_URL}/assets/", json=asset_data)
+        # Find portfolio name
+        portfolio_name = "Unknown"
+        for p in MOCK_PORTFOLIOS:
+            if p["id"] == portfolio_id:
+                portfolio_name = p["name"]
+                break
         
-        # Add transaction
-        transaction_data = {
+        # Add transaction to mock data
+        new_transaction = {
+            "id": len(MOCK_TRANSACTIONS) + 1,
             "portfolio_id": portfolio_id,
-            "asset_symbol": symbol,
+            "portfolio": {"name": portfolio_name},
+            "asset": {"symbol": symbol.upper()},
             "transaction_type": trans_type,
             "quantity": float(quantity),
             "price": float(price),
-            "transaction_date": date
+            "transaction_date": f"{date}T00:00:00"
         }
         
-        response = requests.post(f"{API_BASE_URL}/transactions/", json=transaction_data)
-        if response.status_code == 200:
-            return dbc.Alert("Transaction added successfully!", color="success", dismissable=True)
-        else:
-            return dbc.Alert(f"Error adding transaction: {response.text}", color="danger", dismissable=True)
+        MOCK_TRANSACTIONS.append(new_transaction)
+        return dbc.Alert("Transaction added successfully!", color="success", dismissable=True)
     
     except Exception as e:
         return dbc.Alert(f"Error: {str(e)}", color="danger", dismissable=True)
@@ -2276,11 +2346,8 @@ def add_transaction(n_clicks, portfolio_id, symbol, trans_type, quantity, price,
 )
 def update_transactions_table(n_clicks, portfolio_filter, type_filter, add_result):
     try:
-        response = requests.get(f"{API_BASE_URL}/transactions/")
-        if response.status_code != 200:
-            return html.P("No transactions found")
-        
-        transactions = response.json()
+        # Use mock transactions instead of API call
+        transactions = MOCK_TRANSACTIONS
         if not transactions:
             return html.P("No transactions found")
         
