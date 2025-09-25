@@ -367,21 +367,21 @@ app.layout = dbc.Container([
     dcc.Store(id='portfolio-data-store'),
     dcc.Store(id='market-data-store'),
     dcc.Store(id='net-worth-assets-store', data=[
-        {"type": "real_estate", "name": "Primary Home", "value": 450000},
-        {"type": "investment", "name": "Stock Portfolio", "value": 280000},
-        {"type": "cash", "name": "Savings Account", "value": 120000}
+        {"type": "real_estate", "name": "Primary Home", "value": 37350000},
+        {"type": "investment", "name": "Stock Portfolio", "value": 23240000},
+        {"type": "cash", "name": "Savings Account", "value": 9960000}
     ]),
     dcc.Store(id='net-worth-liabilities-store', data=[
-        {"type": "mortgage", "name": "Home Mortgage", "value": 320000},
-        {"type": "auto_loan", "name": "Car Loan", "value": 25000}
+        {"type": "mortgage", "name": "Home Mortgage", "value": 26560000},
+        {"type": "auto_loan", "name": "Car Loan", "value": 2075000}
     ]),
     dcc.Store(id='budgets-store', data=[
-        {"category": "housing", "name": "Housing", "budget": 2500, "spent": 2400},
-        {"category": "transportation", "name": "Transportation", "budget": 800, "spent": 750},
-        {"category": "food", "name": "Food", "budget": 600, "spent": 650},
-        {"category": "entertainment", "name": "Entertainment", "budget": 400, "spent": 350},
-        {"category": "healthcare", "name": "Healthcare", "budget": 300, "spent": 280},
-        {"category": "shopping", "name": "Shopping", "budget": 500, "spent": 420}
+        {"category": "housing", "name": "Housing", "budget": 207500, "spent": 199200},
+        {"category": "transportation", "name": "Transportation", "budget": 66400, "spent": 62250},
+        {"category": "food", "name": "Food", "budget": 49800, "spent": 53950},
+        {"category": "entertainment", "name": "Entertainment", "budget": 33200, "spent": 29050},
+        {"category": "healthcare", "name": "Healthcare", "budget": 24900, "spent": 23240},
+        {"category": "shopping", "name": "Shopping", "budget": 41500, "spent": 34860}
     ]),
     dcc.Interval(
         id='interval-component',
@@ -857,20 +857,23 @@ def create_monte_carlo_layout():
                         dbc.Form([
                             dbc.Row([
                                 dbc.Col([
-                                    dbc.Label("Target Value ($)"),
+                                    dbc.Label("Target Value (₹ Crores)"),
                                     dbc.Input(
                                         id="mc-target-value",
                                         type="number",
-                                        value=1000000,
-                                        min=1000
-                                    )
+                                        value=10,
+                                        min=1,
+                                        step=0.5,
+                                        placeholder="10"
+                                    ),
+                                    html.Small("Enter value in crores (e.g., 10 = ₹10 crores)", className="text-muted")
                                 ], width=6),
                                 dbc.Col([
                                     dbc.Label("Time Horizon (Years)"),
                                     dbc.Input(
                                         id="mc-years",
                                         type="number",
-                                        value=10,
+                                        value=15,
                                         min=1,
                                         max=50
                                     )
@@ -878,13 +881,16 @@ def create_monte_carlo_layout():
                             ], className="mb-3"),
                             dbc.Row([
                                 dbc.Col([
-                                    dbc.Label("Monthly Contribution ($)"),
+                                    dbc.Label("Monthly SIP (₹)"),
                                     dbc.Input(
                                         id="mc-monthly-contribution",
                                         type="number",
-                                        value=1000,
-                                        min=0
-                                    )
+                                        value=25000,
+                                        min=0,
+                                        step=1000,
+                                        placeholder="25000"
+                                    ),
+                                    html.Small("Monthly investment amount", className="text-muted")
                                 ], width=6),
                                 dbc.Col([
                                     dbc.Label("Number of Simulations"),
@@ -1022,7 +1028,7 @@ def create_net_worth_layout():
                             ], className="mb-3"),
                             dbc.Row([
                                 dbc.Col([
-                                    dbc.Label("Current Value ($)"),
+                                    dbc.Label("Current Value (₹)"),
                                     dbc.Input(id="asset-value-input", type="number", placeholder="0.00")
                                 ], width=6),
                                 dbc.Col([
@@ -1069,7 +1075,7 @@ def create_net_worth_layout():
                             ], className="mb-3"),
                             dbc.Row([
                                 dbc.Col([
-                                    dbc.Label("Outstanding Balance ($)"),
+                                    dbc.Label("Outstanding Balance (₹)"),
                                     dbc.Input(id="liability-balance-input", type="number", placeholder="0.00")
                                 ], width=6),
                                 dbc.Col([
@@ -1209,7 +1215,7 @@ def create_budgeting_layout():
                                 ],
                                 className="mb-3"
                             ),
-                            dbc.Label("Monthly Budget Amount ($)"),
+                            dbc.Label("Monthly Budget Amount (₹)"),
                             dbc.Input(
                                 id="budget-amount-input",
                                 type="number",
@@ -1247,7 +1253,7 @@ def create_budgeting_layout():
                                     )
                                 ], width=6),
                                 dbc.Col([
-                                    dbc.Label("Amount Spent ($)"),
+                                    dbc.Label("Amount Spent (₹)"),
                                     dbc.Input(
                                         id="spending-amount-input",
                                         type="number",
@@ -1784,74 +1790,115 @@ def run_monte_carlo_simulation(n_clicks, target_value, years, monthly_contributi
         return "Click 'Run Simulation' to see results", {}
     
     try:
-        # Make API call to run Monte Carlo simulation
-        payload = {
-            "target_value": target_value or 1000000,
-            "years": years or 10,
-            "monthly_contribution": monthly_contribution or 1000,
-            "num_simulations": num_simulations or 1000
+        # Set default values - all inputs are already in rupees
+        target_value = (target_value or 10) * 10000000  # Convert crores to rupees (10 crores = 100 million INR)
+        years = years or 15
+        monthly_contribution = monthly_contribution or 25000  # Already in rupees
+        num_simulations = num_simulations or 1000
+        
+        # Run Monte Carlo simulation locally
+        import numpy as np
+        rng = np.random.default_rng(42)
+        
+        # Simulation parameters
+        initial_portfolio_value = 500000  # 5 lakh rupees starting portfolio (more realistic)
+        annual_return_mean = 0.12  # 12% average annual return (Indian markets)
+        annual_return_std = 0.18   # 18% volatility
+        
+        # Run simulations
+        final_values = []
+        
+        for _ in range(num_simulations):
+            portfolio_value = initial_portfolio_value
+            
+            for year in range(years):
+                # Annual return with volatility
+                annual_return = rng.normal(annual_return_mean, annual_return_std)
+                portfolio_value = portfolio_value * (1 + annual_return)
+                
+                # Add monthly contributions throughout the year
+                portfolio_value += monthly_contribution * 12
+            
+            final_values.append(portfolio_value)
+        
+        final_values = np.array(final_values)
+        
+        # Calculate statistics
+        percentiles = {
+            '5th': np.percentile(final_values, 5),
+            '25th': np.percentile(final_values, 25),
+            '50th': np.percentile(final_values, 50),
+            '75th': np.percentile(final_values, 75),
+            '95th': np.percentile(final_values, 95)
         }
         
-        response = requests.post(f"{API_BASE_URL}/analytics/portfolio/1/monte-carlo", json=payload)
+        success_probability = np.sum(final_values >= target_value) / num_simulations
         
-        if response.status_code == 200:
-            data = response.json()
+        # Create results summary
+        results_summary = [
+            dbc.Alert([
+                html.H5(f"Success Probability: {success_probability:.1%}"),
+                html.P(f"Chance of reaching ₹{target_value:,.0f} in {years} years")
+            ], color="success" if success_probability > 0.5 else "warning"),
             
-            # Create results summary
-            results_summary = [
-                dbc.Alert([
-                    html.H5(f"Success Probability: {data['success_probability']:.1%}"),
-                    html.P(f"Chance of reaching ${target_value:,} in {years} years")
-                ], color="success" if data['success_probability'] > 0.5 else "warning"),
-                
-                html.H6("Projected Values:"),
-                html.Ul([
-                    html.Li(f"5th percentile: ${data['percentiles']['5th']:,.0f}"),
-                    html.Li(f"25th percentile: ${data['percentiles']['25th']:,.0f}"),
-                    html.Li(f"Median (50th): ${data['percentiles']['50th']:,.0f}"),
-                    html.Li(f"75th percentile: ${data['percentiles']['75th']:,.0f}"),
-                    html.Li(f"95th percentile: ${data['percentiles']['95th']:,.0f}"),
-                ])
-            ]
+            html.H6("Projected Values:"),
+            html.Ul([
+                html.Li(f"5th percentile: ₹{percentiles['5th']:,.0f}"),
+                html.Li(f"25th percentile: ₹{percentiles['25th']:,.0f}"),
+                html.Li(f"Median (50th): ₹{percentiles['50th']:,.0f}"),
+                html.Li(f"75th percentile: ₹{percentiles['75th']:,.0f}"),
+                html.Li(f"95th percentile: ₹{percentiles['95th']:,.0f}"),
+            ]),
             
-            # Create histogram chart
-            # Note: In a real implementation, you'd get the full distribution data
-            import numpy as np
-            rng = np.random.default_rng(42)
-            mock_values = rng.normal(data['percentiles']['50th'], 
-                                   data['percentiles'].get('std', data['percentiles']['50th'] * 0.1), 
-                                   1000)
-            
-            fig = go.Figure()
-            fig.add_trace(go.Histogram(
-                x=mock_values,
-                nbinsx=50,
-                name='Simulation Results',
-                marker={'color': '#667eea', 'opacity': 0.7},
-                hovertemplate='Value Range: $%{x:,.0f}<br>Count: %{y}<extra></extra>'
-            ))
-            
-            fig.add_vline(
-                x=target_value, 
-                line={'dash': "dash", 'color': "#e74c3c", 'width': 2},
-                annotation={'text': f"Target: ${target_value:,}", 'font': {'color': '#e74c3c', 'size': 12}}
-            )
-            
-            fig.update_layout(
-                paper_bgcolor='rgba(0,0,0,0)',
-                plot_bgcolor='rgba(0,0,0,0)',
-                font={'family': 'Inter, sans-serif', 'color': '#e4e4e7'},
-                xaxis_title="Portfolio Value ($)",
-                yaxis_title="Frequency",
-                showlegend=False
-            )
-            
-            return results_summary, fig
-        else:
-            return f"Error running simulation: {response.text}", {}
-            
+            html.Hr(),
+            html.H6("Simulation Parameters:"),
+            html.Ul([
+                html.Li(f"Initial Portfolio: ₹{initial_portfolio_value:,.0f}"),
+                html.Li(f"Monthly Contribution: ₹{monthly_contribution:,.0f}"),
+                html.Li(f"Expected Annual Return: {annual_return_mean:.1%}"),
+                html.Li(f"Volatility: {annual_return_std:.1%}"),
+                html.Li(f"Time Horizon: {years} years"),
+                html.Li(f"Simulations Run: {num_simulations:,}")
+            ])
+        ]
+        
+        # Create histogram chart
+        fig = go.Figure()
+        fig.add_trace(go.Histogram(
+            x=final_values,
+            nbinsx=50,
+            name='Simulation Results',
+            marker={'color': '#667eea', 'opacity': 0.7},
+            hovertemplate='Value Range: ₹%{x:,.0f}<br>Count: %{y}<extra></extra>'
+        ))
+        
+        fig.add_vline(
+            x=target_value, 
+            line={'dash': "dash", 'color': "#e74c3c", 'width': 3},
+            annotation={'text': f"Target: ₹{target_value/10000000:.1f}Cr", 'font': {'color': '#e74c3c', 'size': 12}}
+        )
+        
+        fig.add_vline(
+            x=percentiles['50th'], 
+            line={'dash': "dot", 'color': "#2ecc71", 'width': 2},
+            annotation={'text': f"Median: ₹{percentiles['50th']/10000000:.1f}Cr", 'font': {'color': '#2ecc71', 'size': 10}}
+        )
+        
+        fig.update_layout(
+            title=f"Monte Carlo Simulation Results ({num_simulations:,} simulations)",
+            paper_bgcolor='rgba(0,0,0,0)',
+            plot_bgcolor='rgba(0,0,0,0)',
+            font={'family': 'Inter, sans-serif', 'color': '#e4e4e7'},
+            xaxis_title="Portfolio Value (₹)",
+            yaxis_title="Frequency",
+            showlegend=False
+        )
+        
+        return results_summary, fig
+        
     except Exception as e:
-        return f"Error: {str(e)}", {}
+        error_msg = f"Error running simulation: {str(e)}"
+        return dbc.Alert(error_msg, color="danger"), {}
 
 # Transactions Callbacks
 @app.callback(
@@ -2515,13 +2562,13 @@ def update_net_worth_summary(assets_data, liabilities_data):
         change_percent = 2.5 if net_worth > 0 else 0
         
         return (
-            f"${total_assets:,.0f}",
-            f"${total_liabilities:,.0f}",
-            f"${net_worth:,.0f}",
+            f"₹{total_assets:,.0f}",
+            f"₹{total_liabilities:,.0f}",
+            f"₹{net_worth:,.0f}",
             f"↗ +{change_percent}% this month" if net_worth > 0 else "No change"
         )
     except Exception as e:
-        return "$0", "$0", "$0", "No data"
+        return "₹0", "₹0", "₹0", "No data"
 
 @app.callback(
     Output('net-worth-chart', 'figure'),
@@ -2561,13 +2608,13 @@ def update_net_worth_chart(assets_data, liabilities_data):
             name='Net Worth',
             line=dict(color='#667eea', width=3),
             marker=dict(size=6),
-            hovertemplate='<b>%{x|%B %Y}</b><br>Net Worth: $%{y:,.0f}<extra></extra>'
+            hovertemplate='<b>%{x|%B %Y}</b><br>Net Worth: ₹%{y:,.0f}<extra></extra>'
         ))
         
         fig.update_layout(
             title="Net Worth Trend",
             xaxis_title="Date",
-            yaxis_title="Net Worth ($)",
+            yaxis_title="Net Worth (₹)",
             plot_bgcolor='rgba(0,0,0,0)',
             paper_bgcolor='rgba(0,0,0,0)',
             font={'family': 'Inter, sans-serif', 'color': '#e4e4e7'},
@@ -2612,7 +2659,7 @@ def handle_add_asset(n_clicks, asset_type, asset_name, asset_value, current_asse
         display_data.append({
             "Type": asset['type'].title().replace('_', ' '),
             "Name": asset['name'],
-            "Value": f"${asset['value']:,.0f}"
+            "Value": f"₹{asset['value']:,.0f}"
         })
     
     table = dbc.Table.from_dataframe(
@@ -2664,7 +2711,7 @@ def handle_add_liability(n_clicks, liability_type, liability_name, liability_bal
         display_data.append({
             "Type": liability['type'].title().replace('_', ' '),
             "Name": liability['name'],
-            "Balance": f"${liability['value']:,.0f}"
+            "Balance": f"₹{liability['value']:,.0f}"
         })
     
     table = dbc.Table.from_dataframe(
@@ -2695,7 +2742,7 @@ def update_budget_summary(budgets_data):
     """Update budget summary cards with real data."""
     try:
         if not budgets_data:
-            return "$0", "$0", "$0", "$0"
+            return "₹0", "₹0", "₹0", "₹0"
         
         # Calculate totals from actual budget data
         total_budget = sum(budget['budget'] for budget in budgets_data)
@@ -2704,13 +2751,13 @@ def update_budget_summary(budgets_data):
         remaining = total_budget - total_spending
         
         return (
-            f"${monthly_income:,.0f}",
-            f"${total_spending:,.0f}",
-            f"${total_budget:,.0f}",
-            f"${remaining:,.0f}"
+            f"₹{monthly_income:,.0f}",
+            f"₹{total_spending:,.0f}",
+            f"₹{total_budget:,.0f}",
+            f"₹{remaining:,.0f}"
         )
     except Exception as e:
-        return "$0", "$0", "$0", "$0"
+        return "₹0", "₹0", "₹0", "₹0"
 
 @app.callback(
     Output('budget-categories-chart', 'figure'),
@@ -2734,7 +2781,7 @@ def update_budget_chart(budgets_data):
             x=categories,
             y=budgets,
             marker_color='#667eea',
-            hovertemplate='<b>%{x}</b><br>Budget: $%{y:,.0f}<extra></extra>'
+            hovertemplate='<b>%{x}</b><br>Budget: ₹%{y:,.0f}<extra></extra>'
         ))
         
         fig.add_trace(go.Bar(
@@ -2742,13 +2789,13 @@ def update_budget_chart(budgets_data):
             x=categories,
             y=spending,
             marker_color='#f5576c',
-            hovertemplate='<b>%{x}</b><br>Spent: $%{y:,.0f}<extra></extra>'
+            hovertemplate='<b>%{x}</b><br>Spent: ₹%{y:,.0f}<extra></extra>'
         ))
         
         fig.update_layout(
             title="Budget vs Spending by Category",
             xaxis_title="Category",
-            yaxis_title="Amount ($)",
+            yaxis_title="Amount (₹)",
             barmode='group',
             plot_bgcolor='rgba(0,0,0,0)',
             paper_bgcolor='rgba(0,0,0,0)',
@@ -2804,7 +2851,7 @@ def handle_create_budget(n_clicks, category, amount, current_budgets):
             dbc.Row([
                 dbc.Col([
                     html.H6(f"{budget['name']}", className="mb-1"),
-                    html.Small(f"${budget['spent']:,.0f} of ${budget['budget']:,.0f}", className="text-muted")
+                    html.Small(f"₹{budget['spent']:,.0f} of ₹{budget['budget']:,.0f}", className="text-muted")
                 ], width=4),
                 dbc.Col([
                     dbc.Progress(
@@ -2838,11 +2885,11 @@ def update_recent_transactions(n):
     """Update recent transactions table."""
     # Mock transaction data
     transactions_data = [
-        {"Date": "2025-09-24", "Description": "Grocery Store", "Category": "Food", "Amount": "$85.50"},
-        {"Date": "2025-09-23", "Description": "Gas Station", "Category": "Transportation", "Amount": "$45.00"},
-        {"Date": "2025-09-22", "Description": "Electric Bill", "Category": "Utilities", "Amount": "$120.00"},
-        {"Date": "2025-09-21", "Description": "Restaurant", "Category": "Entertainment", "Amount": "$65.25"},
-        {"Date": "2025-09-20", "Description": "Pharmacy", "Category": "Healthcare", "Amount": "$28.99"}
+        {"Date": "2025-09-24", "Description": "Grocery Store", "Category": "Food", "Amount": "₹7,097"},
+        {"Date": "2025-09-23", "Description": "Petrol Station", "Category": "Transportation", "Amount": "₹3,735"},
+        {"Date": "2025-09-22", "Description": "Electric Bill", "Category": "Utilities", "Amount": "₹9,960"},
+        {"Date": "2025-09-21", "Description": "Restaurant", "Category": "Entertainment", "Amount": "₹5,415"},
+        {"Date": "2025-09-20", "Description": "Pharmacy", "Category": "Healthcare", "Amount": "₹2,406"}
     ]
     
     table = dbc.Table.from_dataframe(
