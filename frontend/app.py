@@ -1221,7 +1221,8 @@ def create_net_worth_layout():
                                             {"label": "Retirement Account", "value": "retirement_account"},
                                             {"label": "Business", "value": "business"},
                                             {"label": "Other", "value": "other"}
-                                        ]
+                                        ],
+                                        className="modern-input"
                                     )
                                 ], width=6),
                                 dbc.Col([
@@ -1268,7 +1269,8 @@ def create_net_worth_layout():
                                             {"label": "Personal Loan", "value": "personal_loan"},
                                             {"label": "Business Loan", "value": "business_loan"},
                                             {"label": "Other", "value": "other"}
-                                        ]
+                                        ],
+                                        className="modern-input"
                                     )
                                 ], width=6),
                                 dbc.Col([
@@ -1416,7 +1418,7 @@ def create_budgeting_layout():
                                     {"label": "Travel", "value": "travel"},
                                     {"label": "Other", "value": "other"}
                                 ],
-                                className="mb-3"
+                                className="modern-input mb-3"
                             ),
                             dbc.Label("Monthly Budget Amount (₹)"),
                             dbc.Input(
@@ -1452,7 +1454,8 @@ def create_budgeting_layout():
                                     dbc.Label("Select Budget Category"),
                                     dbc.Select(
                                         id="spending-category-select",
-                                        placeholder="Choose category..."
+                                        placeholder="Choose category...",
+                                        className="modern-input"
                                     )
                                 ], width=6),
                                 dbc.Col([

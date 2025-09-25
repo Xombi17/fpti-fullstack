@@ -405,6 +405,370 @@ body {
   background: var(--dark-hover);
 }
 
+/* Dash Dropdown Styling - Fix visibility issues */
+.modern-input .Select-control {
+  background: var(--dark-surface) !important;
+  border: 2px solid var(--dark-border) !important;
+  border-radius: var(--radius-md) !important;
+  color: var(--text-primary) !important;
+  min-height: 42px !important;
+}
+
+.modern-input .Select-placeholder {
+  color: var(--text-secondary) !important;
+}
+
+.modern-input .Select-input > input {
+  color: var(--text-primary) !important;
+}
+
+.modern-input .Select-value-label {
+  color: var(--text-primary) !important;
+}
+
+.modern-input .Select-arrow-zone {
+  padding-right: 10px !important;
+}
+
+.modern-input .Select-arrow {
+  border-color: var(--text-secondary) transparent transparent !important;
+}
+
+.modern-input.is-focused .Select-control {
+  border-color: var(--accent-blue) !important;
+  box-shadow: 0 0 0 3px rgba(0, 113, 243, 0.1) !important;
+  background: var(--dark-hover) !important;
+}
+
+.modern-input .Select-menu-outer {
+  background: var(--dark-surface) !important;
+  border: 2px solid var(--dark-border) !important;
+  border-radius: var(--radius-md) !important;
+  box-shadow: var(--shadow-lg) !important;
+  z-index: 9999 !important;
+  margin-top: 2px !important;
+}
+
+.modern-input .Select-menu {
+  background: var(--dark-surface) !important;
+  border-radius: var(--radius-md) !important;
+  max-height: 200px !important;
+}
+
+.modern-input .Select-option {
+  background: var(--dark-surface) !important;
+  color: var(--text-primary) !important;
+  padding: 12px 16px !important;
+  cursor: pointer !important;
+  border-bottom: 1px solid var(--dark-border) !important;
+}
+
+.modern-input .Select-option:hover {
+  background: var(--dark-hover) !important;
+  color: var(--white) !important;
+}
+
+.modern-input .Select-option.is-focused {
+  background: var(--dark-hover) !important;
+  color: var(--white) !important;
+}
+
+.modern-input .Select-option.is-selected {
+  background: var(--accent-blue) !important;
+  color: var(--white) !important;
+}
+
+.modern-input .Select-option:last-child {
+  border-bottom: none !important;
+  border-radius: 0 0 var(--radius-md) var(--radius-md) !important;
+}
+
+/* New React-Select styling (for newer Dash versions) */
+.modern-input .css-yk16xz-control,
+.modern-input .css-1pahdxg-control {
+  background: var(--dark-surface) !important;
+  border: 2px solid var(--dark-border) !important;
+  border-radius: var(--radius-md) !important;
+  min-height: 42px !important;
+  box-shadow: none !important;
+}
+
+.modern-input .css-1wa3eu0-placeholder {
+  color: var(--text-secondary) !important;
+}
+
+.modern-input .css-1uccc91-singleValue {
+  color: var(--text-primary) !important;
+}
+
+.modern-input .css-1g6gooi {
+  color: var(--text-primary) !important;
+}
+
+.modern-input .css-26l3qy-menu {
+  background: var(--dark-surface) !important;
+  border: 2px solid var(--dark-border) !important;
+  border-radius: var(--radius-md) !important;
+  box-shadow: var(--shadow-lg) !important;
+  z-index: 9999 !important;
+}
+
+.modern-input .css-4ljt47-MenuList {
+  background: var(--dark-surface) !important;
+  border-radius: var(--radius-md) !important;
+  max-height: 200px !important;
+}
+
+.modern-input .css-9jq23d {
+  background: var(--dark-surface) !important;
+  color: var(--text-primary) !important;
+  padding: 12px 16px !important;
+  cursor: pointer !important;
+}
+
+.modern-input .css-9jq23d:hover {
+  background: var(--dark-hover) !important;
+  color: var(--white) !important;
+}
+
+.modern-input .css-tr4s17 {
+  background: var(--accent-blue) !important;
+  color: var(--white) !important;
+}
+
+.modern-input .css-1okebmr-indicatorSeparator {
+  background: var(--dark-border) !important;
+}
+
+.modern-input .css-tlfecz-indicatorContainer {
+  color: var(--text-secondary) !important;
+}
+
+.modern-input .css-1wy0on6:focus {
+  border-color: var(--accent-blue) !important;
+  box-shadow: 0 0 0 3px rgba(0, 113, 243, 0.1) !important;
+  background: var(--dark-hover) !important;
+}
+
+/* AGGRESSIVE DROPDOWN FIXES - Override all white backgrounds */
+/* Target any div that might be a dropdown menu */
+.modern-input div[class*="menu"] {
+  background: var(--primary-blue) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--dark-border) !important;
+  border-radius: var(--radius-md) !important;
+}
+
+.modern-input div[class*="option"] {
+  background: var(--primary-blue) !important;
+  color: var(--text-primary) !important;
+  padding: 10px 12px !important;
+}
+
+.modern-input div[class*="option"]:hover {
+  background: var(--accent-blue) !important;
+  color: var(--white) !important;
+}
+
+/* Universal dropdown styling - target all possible selectors */
+.modern-input [role="listbox"],
+.modern-input [role="option"],
+.modern-input .Select-menu,
+.modern-input .Select-menu-outer,
+.modern-input .Select-option {
+  background: var(--primary-blue) !important;
+  color: var(--text-primary) !important;
+}
+
+.modern-input [role="option"]:hover,
+.modern-input .Select-option:hover {
+  background: var(--accent-blue) !important;
+  color: var(--white) !important;
+}
+
+/* Target Dash's actual dropdown classes */
+.modern-input .dropdown-content,
+.modern-input .dropdown-menu,
+.modern-input .dash-dropdown .Select-menu-outer {
+  background: var(--primary-blue) !important;
+  border: 1px solid var(--dark-border) !important;
+  border-radius: var(--radius-md) !important;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3) !important;
+}
+
+.modern-input .dropdown-item,
+.modern-input .dash-dropdown .Select-option {
+  background: var(--primary-blue) !important;
+  color: var(--text-primary) !important;
+  padding: 10px 12px !important;
+  border: none !important;
+}
+
+.modern-input .dropdown-item:hover,
+.modern-input .dash-dropdown .Select-option:hover {
+  background: var(--accent-blue) !important;
+  color: var(--white) !important;
+}
+
+/* Nuclear option - target any white background in dropdown */
+.modern-input div[style*="background-color: white"],
+.modern-input div[style*="background-color: #ffffff"],
+.modern-input div[style*="background-color: #fff"],
+.modern-input div[style*="background-color:white"],
+.modern-input div[style*="background-color:#ffffff"],
+.modern-input div[style*="background-color:#fff"] {
+  background: var(--primary-blue) !important;
+  color: var(--text-primary) !important;
+}
+
+/* ULTIMATE NUCLEAR DROPDOWN FIX */
+/* Target absolutely everything that could be a dropdown */
+div[class*="dropdown"] div,
+div[class*="select"] div,
+div[class*="menu"] div,
+.modern-input > div > div,
+.modern-input div div div {
+  background: var(--primary-blue) !important;
+  color: var(--text-primary) !important;
+}
+
+/* Specific targeting for common dropdown patterns */
+.modern-input div:not([class*="control"]):not([class*="input"]) {
+  background: var(--primary-blue) !important;
+  color: var(--text-primary) !important;
+}
+
+/* Force all child divs in dropdown to have dark background */
+.modern-input div div {
+  background-color: var(--primary-blue) !important;
+}
+
+/* Target any absolutely positioned elements (dropdown menus) */
+.modern-input div[style*="position: absolute"],
+.modern-input div[style*="position:absolute"] {
+  background: var(--primary-blue) !important;
+  border: 1px solid var(--dark-border) !important;
+  border-radius: var(--radius-md) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* =============================================
+   NET WORTH & BUDGETING PAGE DROPDOWN FIXES
+   ============================================= */
+
+/* DBC Select Components (Bootstrap Select) */
+select.form-select,
+select.form-control,
+#asset-type-select,
+#liability-type-select,
+#budget-category-select,
+#spending-category-select {
+  background: var(--primary-blue) !important;
+  border: 2px solid var(--dark-border) !important;
+  border-radius: var(--radius-md) !important;
+  color: var(--text-primary) !important;
+  padding: var(--spacing-md) !important;
+  font-weight: 500 !important;
+}
+
+select.form-select:focus,
+select.form-control:focus,
+#asset-type-select:focus,
+#liability-type-select:focus,
+#budget-category-select:focus,
+#spending-category-select:focus {
+  background: var(--dark-hover) !important;
+  border-color: var(--accent-blue) !important;
+  box-shadow: 0 0 0 3px rgba(0, 113, 243, 0.1) !important;
+  color: var(--text-primary) !important;
+  outline: none !important;
+}
+
+/* Select option styling */
+select option {
+  background: var(--primary-blue) !important;
+  color: var(--text-primary) !important;
+  padding: 8px 12px !important;
+}
+
+select option:hover,
+select option:focus,
+select option:checked {
+  background: var(--accent-blue) !important;
+  color: var(--white) !important;
+}
+
+/* Universal Select Dropdown Menu Styling */
+select[class*="select"],
+select[id*="select"],
+.form-select,
+.form-control[multiple] {
+  background: var(--primary-blue) !important;
+  border: 2px solid var(--dark-border) !important;
+  color: var(--text-primary) !important;
+}
+
+/* Dropdown arrow styling for select elements */
+select.form-select {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23e8eaed' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m1 6 7 7 7-7'/%3e%3c/svg%3e") !important;
+}
+
+/* Additional universal dropdown styling for any missed dropdowns */
+.dropdown-toggle,
+.btn-dropdown {
+  background: var(--primary-blue) !important;
+  border: 2px solid var(--dark-border) !important;
+  color: var(--text-primary) !important;
+}
+
+.dropdown-toggle:focus,
+.btn-dropdown:focus {
+  background: var(--dark-hover) !important;
+  border-color: var(--accent-blue) !important;
+  box-shadow: 0 0 0 3px rgba(0, 113, 243, 0.1) !important;
+}
+
+/* Bootstrap dropdown menu overrides */
+.dropdown-menu {
+  background: var(--primary-blue) !important;
+  border: 1px solid var(--dark-border) !important;
+  border-radius: var(--radius-md) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+}
+
+.dropdown-item {
+  background: var(--primary-blue) !important;
+  color: var(--text-primary) !important;
+  padding: 10px 16px !important;
+  border: none !important;
+}
+
+.dropdown-item:hover,
+.dropdown-item:focus {
+  background: var(--accent-blue) !important;
+  color: var(--white) !important;
+}
+
+.dropdown-item.active {
+  background: var(--accent-blue) !important;
+  color: var(--white) !important;
+}
+
+/* Catch any remaining select elements */
+select {
+  background: var(--primary-blue) !important;
+  border: 2px solid var(--dark-border) !important;
+  color: var(--text-primary) !important;
+  border-radius: var(--radius-md) !important;
+}
+
+select:focus {
+  background: var(--dark-hover) !important;
+  border-color: var(--accent-blue) !important;
+  box-shadow: 0 0 0 3px rgba(0, 113, 243, 0.1) !important;
+  outline: none !important;
+}
+
 .modern-button {
   background: var(--gradient-primary);
   border: none;
