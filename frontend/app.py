@@ -99,12 +99,25 @@ def fetch_live_market_data(symbols_list):
 def fetch_detailed_quote(symbol):
     """Fetch detailed quote for a single symbol using Yahoo Finance."""
     try:
+        # Try original symbol first
         quote_data = fetch_yahoo_quote(symbol)
-        if quote_data:
+        if quote_data and quote_data.get("price") is not None:
+            print(f"DEBUG: Got Yahoo Finance data for {symbol}: {quote_data}")
             return quote_data
-        else:
-            print(f"No data found for {symbol}, using mock data")
-            return get_mock_quote_data(symbol)
+        
+        # For Indian stocks, try adding .NS suffix if not present
+        if not symbol.endswith('.NS') and not '.' in symbol:
+            # Try with .NS suffix for Indian stocks
+            symbol_ns = f"{symbol}.NS"
+            print(f"DEBUG: Trying Indian stock symbol: {symbol_ns}")
+            quote_data = fetch_yahoo_quote(symbol_ns)
+            
+            if quote_data and quote_data.get("price") is not None:
+                print(f"DEBUG: Got Yahoo Finance data for {symbol_ns}: {quote_data}")
+                return quote_data
+        
+        print(f"No data found for {symbol}, using mock data")
+        return get_mock_quote_data(symbol)
     except Exception as e:
         print(f"Error fetching detailed quote for {symbol}: {e}")
         return get_mock_quote_data(symbol)
@@ -122,7 +135,8 @@ def get_mock_quote_data(symbol):
             "latest_trading_day": "2025-09-24",
             "previous_close": 256.08,
             "change": -1.65,
-            "change_percent": "-0.64"
+            "change_percent": "-0.64",
+            "currency": "USD"
         },
         "GOOGL": {
             "symbol": "GOOGL",
@@ -134,7 +148,8 @@ def get_mock_quote_data(symbol):
             "latest_trading_day": "2025-09-24",
             "previous_close": 252.10,
             "change": -0.44,
-            "change_percent": "-0.17"
+            "change_percent": "-0.17",
+            "currency": "USD"
         },
         "MSFT": {
             "symbol": "MSFT",
@@ -146,7 +161,88 @@ def get_mock_quote_data(symbol):
             "latest_trading_day": "2025-09-24",
             "previous_close": 507.90,
             "change": 1.33,
-            "change_percent": "0.26"
+            "change_percent": "0.26",
+            "currency": "USD"
+        },
+        # Indian stocks
+        "RELIANCE.NS": {
+            "symbol": "RELIANCE.NS",
+            "open": 1381.30,
+            "high": 1384.50,
+            "low": 1369.00,
+            "price": 1372.40,
+            "volume": 11329904,
+            "latest_trading_day": "2025-09-25",
+            "previous_close": 1383.00,
+            "change": -10.60,
+            "change_percent": "-0.77",
+            "currency": "INR"
+        },
+        "TCS.NS": {
+            "symbol": "TCS.NS",
+            "open": 3022.00,
+            "high": 3029.60,
+            "low": 2951.00,
+            "price": 2957.40,
+            "volume": 4971744,
+            "latest_trading_day": "2025-09-25",
+            "previous_close": 3035.40,
+            "change": -78.00,
+            "change_percent": "-2.57",
+            "currency": "INR"
+        },
+        "INFY.NS": {
+            "symbol": "INFY.NS",
+            "open": 1489.00,
+            "high": 1502.70,
+            "low": 1476.50,
+            "price": 1484.80,
+            "volume": 9491460,
+            "latest_trading_day": "2025-09-25",
+            "previous_close": 1494.60,
+            "change": -9.80,
+            "change_percent": "-0.66",
+            "currency": "INR"
+        },
+        # Common Indian stock names without .NS
+        "RELIANCE": {
+            "symbol": "RELIANCE.NS",
+            "open": 1381.30,
+            "high": 1384.50,
+            "low": 1369.00,
+            "price": 1372.40,
+            "volume": 11329904,
+            "latest_trading_day": "2025-09-25",
+            "previous_close": 1383.00,
+            "change": -10.60,
+            "change_percent": "-0.77",
+            "currency": "INR"
+        },
+        "TCS": {
+            "symbol": "TCS.NS",
+            "open": 3022.00,
+            "high": 3029.60,
+            "low": 2951.00,
+            "price": 2957.40,
+            "volume": 4971744,
+            "latest_trading_day": "2025-09-25",
+            "previous_close": 3035.40,
+            "change": -78.00,
+            "change_percent": "-2.57",
+            "currency": "INR"
+        },
+        "INFY": {
+            "symbol": "INFY.NS",
+            "open": 1489.00,
+            "high": 1502.70,
+            "low": 1476.50,
+            "price": 1484.80,
+            "volume": 9491460,
+            "latest_trading_day": "2025-09-25",
+            "previous_close": 1494.60,
+            "change": -9.80,
+            "change_percent": "-0.66",
+            "currency": "INR"
         }
     }
     
@@ -154,18 +250,37 @@ def get_mock_quote_data(symbol):
     if symbol in mock_data:
         return mock_data[symbol]
     else:
-        return {
-            "symbol": symbol,
-            "open": 100.00,
-            "high": 105.50,
-            "low": 99.20,
-            "price": 103.45,
-            "volume": 5000000,
-            "latest_trading_day": "2025-09-24",
-            "previous_close": 102.80,
-            "change": 0.65,
-            "change_percent": "0.63"
-        }
+        # Determine if it's an Indian stock for currency
+        is_indian = symbol.endswith('.NS') or symbol.upper() in ['RELIANCE', 'TCS', 'INFY', 'HDFC', 'SBI', 'BHARTIARTL', 'ICICIBANK', 'ITC', 'HINDUNILVR', 'KOTAKBANK', 'LT', 'ASIANPAINT', 'MARUTI', 'BAJFINANCE', 'HCLTECH', 'WIPRO', 'ULTRACEMCO', 'SBIN', 'AXISBANK', 'ONGC', 'SUNPHARMA', 'NESTLEIND', 'POWERGRID', 'NTPC', 'DRREDDY', 'JSWSTEEL', 'INDUSINDBK', 'ADANIPORTS', 'TECHM']
+        
+        if is_indian:
+            return {
+                "symbol": symbol,
+                "open": 1500.00,
+                "high": 1520.50,
+                "low": 1485.20,
+                "price": 1503.45,
+                "volume": 5000000,
+                "latest_trading_day": "2025-09-25",
+                "previous_close": 1498.80,
+                "change": 4.65,
+                "change_percent": "0.31",
+                "currency": "INR"
+            }
+        else:
+            return {
+                "symbol": symbol,
+                "open": 100.00,
+                "high": 105.50,
+                "low": 99.20,
+                "price": 103.45,
+                "volume": 5000000,
+                "latest_trading_day": "2025-09-24",
+                "previous_close": 102.80,
+                "change": 0.65,
+                "change_percent": "0.63",
+                "currency": "USD"
+            }
 
 def fetch_intraday_data(symbol, interval="5min"):
     """Fetch intraday data for a symbol using Yahoo Finance."""
@@ -1465,12 +1580,14 @@ def load_data(n):
         # Get portfolio symbols for live prices - Mixed stocks
         symbols = ['RELIANCE.NS', 'TCS.NS', 'INFY.NS', 'AAPL', 'GOOGL', 'TSLA']  # Mixed demo symbols
         
-        # Fetch real live prices for portfolio symbols - Indian stocks in rupees
+        # Fetch real live prices for portfolio symbols - Mixed stocks
         live_quotes = {}
+        print(f"[DEBUG] Fetching live data for symbols: {symbols}")
         for symbol in symbols:
             try:
                 quote_data = fetch_yahoo_quote(symbol)
                 if quote_data:
+                    print(f"[DEBUG] Got live data for {symbol}: {quote_data['price']}")
                     live_quotes[symbol] = {
                         'symbol': quote_data['symbol'],
                         'price': quote_data['price'],
@@ -1481,6 +1598,7 @@ def load_data(n):
                         'currency': quote_data.get('currency', 'INR')
                     }
                 else:
+                    print(f"[DEBUG] No data received for {symbol}, using fallback")
                     # Fallback to mock data for failed fetches
                     fallback_data = {
                         'RELIANCE.NS': {'price': 1372.4, 'change': -22.75, 'change_percent': '-1.63'},
@@ -1709,9 +1827,10 @@ def update_allocation_chart(portfolio_data):
 
 @app.callback(
     Output('holdings-table', 'children'),
-    Input('portfolio-data-store', 'data')
+    [Input('portfolio-data-store', 'data'),
+     Input('market-data-store', 'data')]
 )
-def update_holdings_table(portfolio_data):
+def update_holdings_table(portfolio_data, market_data):
     if not portfolio_data:
         # Fallback to mock data if no portfolio data
         holdings_data = {
@@ -1763,30 +1882,96 @@ def update_holdings_table(portfolio_data):
             if all_holdings:
                 df = pd.DataFrame(all_holdings)
             else:
-                # Fallback to mock data - Mixed Indian and US stocks
-                holdings_data = {
-                    'Symbol': ['RELIANCE.NS', 'TCS.NS', 'INFY.NS', 'AAPL', 'GOOGL', 'TSLA'],
-                    'Shares': [50, 25, 100, 10, 5, 8],
-                    'Avg Cost': [1400.00, 3000.00, 1750.00, 150.00, 2800.00, 240.00],
-                    'Current Price': [1372.40, 2957.40, 1842.45, 176.80, 2850.25, 248.50],
-                    'Market Value': [68620, 73935, 184245, 1768, 14251, 1988],
-                    'P&L': [-1380, -1065, 9245, 268, 251, 68],
-                    'P&L %': [-1.97, -1.42, 5.29, 17.87, 1.79, 3.54]
+                # Create demo holdings with REAL live data from market_data
+                demo_holdings = {
+                    'RELIANCE.NS': {'shares': 50, 'avg_cost': 1400.00},
+                    'TCS.NS': {'shares': 25, 'avg_cost': 3000.00},
+                    'INFY.NS': {'shares': 100, 'avg_cost': 1750.00},
+                    'AAPL': {'shares': 10, 'avg_cost': 150.00},
+                    'GOOGL': {'shares': 5, 'avg_cost': 2800.00},
+                    'TSLA': {'shares': 8, 'avg_cost': 240.00}
                 }
+                
+                holdings_data = {
+                    'Symbol': [],
+                    'Shares': [],
+                    'Avg Cost': [],
+                    'Current Price': [],
+                    'Market Value': [],
+                    'P&L': [],
+                    'P&L %': []
+                }
+                
+                # Use real live quotes if available
+                live_quotes = market_data.get('live_quotes', {}) if market_data else {}
+                
+                for symbol, holding in demo_holdings.items():
+                    shares = holding['shares']
+                    avg_cost = holding['avg_cost']
+                    
+                    # Get current price from live data or fallback
+                    if symbol in live_quotes:
+                        current_price = live_quotes[symbol]['price']
+                    else:
+                        # Fallback prices if live data not available
+                        fallback_prices = {
+                            'RELIANCE.NS': 1372.4, 'TCS.NS': 2957.4, 'INFY.NS': 1484.8,
+                            'AAPL': 176.80, 'GOOGL': 2850.25, 'TSLA': 248.50
+                        }
+                        current_price = fallback_prices.get(symbol, 100.0)
+                    
+                    market_value = shares * current_price
+                    cost_basis = shares * avg_cost
+                    pnl = market_value - cost_basis
+                    pnl_percent = (pnl / cost_basis * 100) if cost_basis > 0 else 0
+                    
+                    holdings_data['Symbol'].append(symbol)
+                    holdings_data['Shares'].append(shares)
+                    holdings_data['Avg Cost'].append(avg_cost)
+                    holdings_data['Current Price'].append(current_price)
+                    holdings_data['Market Value'].append(market_value)
+                    holdings_data['P&L'].append(pnl)
+                    holdings_data['P&L %'].append(pnl_percent / 100)  # Convert to decimal for % formatting
+                
                 df = pd.DataFrame(holdings_data)
                 
         except Exception as e:
             print(f"Error processing holdings data: {e}")
-            # Fallback to mock data - Mixed Indian and US stocks
+            # Emergency fallback - Use live market data if available
+            live_quotes = market_data.get('live_quotes', {}) if market_data else {}
+            
             holdings_data = {
                 'Symbol': ['RELIANCE.NS', 'TCS.NS', 'INFY.NS', 'AAPL', 'GOOGL', 'TSLA'],
                 'Shares': [50, 25, 100, 10, 5, 8],
                 'Avg Cost': [1400.00, 3000.00, 1750.00, 150.00, 2800.00, 240.00],
-                'Current Price': [1372.40, 2957.40, 1842.45, 176.80, 2850.25, 248.50],
-                'Market Value': [68620, 73935, 184245, 1768, 14251, 1988],
-                'P&L': [-1380, -1065, 9245, 268, 251, 68],
-                'P&L %': [-1.97, -1.42, 5.29, 17.87, 1.79, 3.54]
+                'Current Price': [],
+                'Market Value': [],
+                'P&L': [],
+                'P&L %': []
             }
+            
+            for i, symbol in enumerate(holdings_data['Symbol']):
+                shares = holdings_data['Shares'][i]
+                avg_cost = holdings_data['Avg Cost'][i]
+                
+                # Use live price if available
+                if symbol in live_quotes:
+                    current_price = live_quotes[symbol]['price']
+                else:
+                    # Static fallback as last resort
+                    fallback_prices = {'RELIANCE.NS': 1372.4, 'TCS.NS': 2957.4, 'INFY.NS': 1484.8, 'AAPL': 176.80, 'GOOGL': 2850.25, 'TSLA': 248.50}
+                    current_price = fallback_prices.get(symbol, 100.0)
+                
+                market_value = shares * current_price
+                cost_basis = shares * avg_cost
+                pnl = market_value - cost_basis
+                pnl_percent = (pnl / cost_basis) if cost_basis > 0 else 0
+                
+                holdings_data['Current Price'].append(current_price)
+                holdings_data['Market Value'].append(market_value)
+                holdings_data['P&L'].append(pnl)
+                holdings_data['P&L %'].append(pnl_percent)
+            
             df = pd.DataFrame(holdings_data)
     
     # Format currency columns based on stock type and store original P&L for styling
