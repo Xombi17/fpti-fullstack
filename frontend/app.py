@@ -2597,7 +2597,13 @@ def get_stock_quote(n_clicks, symbol):
     if not n_clicks or not symbol:
         return ""
     
-    quote_data = fetch_detailed_quote(symbol.upper())
+    print(f"DEBUG: get_stock_quote called with symbol: {symbol}")
+    symbol_upper = symbol.upper()
+    print(f"DEBUG: Calling fetch_detailed_quote with: {symbol_upper}")
+    
+    quote_data = fetch_detailed_quote(symbol_upper)
+    print(f"DEBUG: fetch_detailed_quote returned: {quote_data}")
+    
     if not quote_data:
         return dbc.Alert("Quote not found or API error", color="danger")
     
@@ -2736,10 +2742,41 @@ def search_symbols_callback(n_clicks, keywords):
 )
 def update_intraday_chart(n_clicks, symbol, interval):
     if not n_clicks or not symbol:
-        return {}, ""
+        # Return a default chart with sample data instead of empty
+        fig = go.Figure()
+        fig.add_annotation(
+            text="Enter a stock symbol and click Load to view intraday chart",
+            x=0.5, y=0.5, 
+            showarrow=False,
+            font=dict(size=16, color='#94a3b8')
+        )
+        fig.update_layout(
+            xaxis=dict(visible=False),
+            yaxis=dict(visible=False),
+            plot_bgcolor='rgba(0,0,0,0)',
+            paper_bgcolor='rgba(0,0,0,0)',
+            font={'family': 'Inter, sans-serif', 'color': '#e4e4e7'},
+            height=400
+        )
+        return fig, ""
     
-    intraday_data = fetch_intraday_data(symbol.upper(), interval)
+    print(f"DEBUG: Intraday chart requested for {symbol} with interval {interval}")
+    
+    # Convert symbol to uppercase and handle Indian stocks
+    symbol_upper = symbol.upper()
+    
+    # For common Indian stock names, try .NS suffix if not present
+    if not symbol_upper.endswith('.NS') and not '.' in symbol_upper:
+        common_indian_stocks = ['RELIANCE', 'TCS', 'INFY', 'HDFC', 'SBI', 'BHARTIARTL', 'ICICIBANK']
+        if symbol_upper in common_indian_stocks:
+            symbol_upper = f"{symbol_upper}.NS"
+            print(f"DEBUG: Converted to Indian stock symbol: {symbol_upper}")
+    
+    intraday_data = fetch_intraday_data(symbol_upper, interval)
+    print(f"DEBUG: Intraday data received: {intraday_data}")
+    
     if not intraday_data or 'data' not in intraday_data:
+        print(f"DEBUG: No valid intraday data found. Data keys: {intraday_data.keys() if intraday_data else 'None'}")
         fig = go.Figure()
         fig.add_annotation(text="No intraday data available", x=0.5, y=0.5, showarrow=False)
         fig.update_layout(
@@ -2766,10 +2803,13 @@ def update_intraday_chart(n_clicks, symbol, interval):
         name=symbol.upper()
     ))
     
+    # Determine currency label based on symbol
+    currency_symbol = "₹" if symbol_upper.endswith('.NS') or symbol_upper.endswith('.BO') else "$"
+    
     fig.update_layout(
-        title=f"{symbol.upper()} - {interval} Intraday Chart",
+        title=f"{symbol_upper} - {interval} Intraday Chart",
         xaxis_title="Time",
-        yaxis_title="Price ($)",
+        yaxis_title=f"Price ({currency_symbol})",
         plot_bgcolor='rgba(0,0,0,0)',
         paper_bgcolor='rgba(0,0,0,0)',
         font={'family': 'Inter, sans-serif', 'color': '#e4e4e7'},
