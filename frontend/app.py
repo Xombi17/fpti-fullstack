@@ -366,6 +366,23 @@ def get_mock_search_results(keywords):
 app.layout = dbc.Container([
     dcc.Store(id='portfolio-data-store'),
     dcc.Store(id='market-data-store'),
+    dcc.Store(id='net-worth-assets-store', data=[
+        {"type": "real_estate", "name": "Primary Home", "value": 450000},
+        {"type": "investment", "name": "Stock Portfolio", "value": 280000},
+        {"type": "cash", "name": "Savings Account", "value": 120000}
+    ]),
+    dcc.Store(id='net-worth-liabilities-store', data=[
+        {"type": "mortgage", "name": "Home Mortgage", "value": 320000},
+        {"type": "auto_loan", "name": "Car Loan", "value": 25000}
+    ]),
+    dcc.Store(id='budgets-store', data=[
+        {"category": "housing", "name": "Housing", "budget": 2500, "spent": 2400},
+        {"category": "transportation", "name": "Transportation", "budget": 800, "spent": 750},
+        {"category": "food", "name": "Food", "budget": 600, "spent": 650},
+        {"category": "entertainment", "name": "Entertainment", "budget": 400, "spent": 350},
+        {"category": "healthcare", "name": "Healthcare", "budget": 300, "spent": 280},
+        {"category": "shopping", "name": "Shopping", "budget": 500, "spent": 420}
+    ]),
     dcc.Interval(
         id='interval-component',
         interval=10*60*1000,  # Update every 10 minutes to respect API limits
@@ -1209,6 +1226,56 @@ def create_budgeting_layout():
                     ])
                 ], className="modern-card")
             ], width=4)
+        ], className="mb-4"),
+        
+        # Add Spending Section
+        dbc.Row([
+            dbc.Col([
+                dbc.Card([
+                    dbc.CardBody([
+                        html.H4([
+                            html.I(className="fas fa-shopping-cart me-2"),
+                            "Add Spending"
+                        ]),
+                        dbc.Form([
+                            dbc.Row([
+                                dbc.Col([
+                                    dbc.Label("Select Budget Category"),
+                                    dbc.Select(
+                                        id="spending-category-select",
+                                        placeholder="Choose category..."
+                                    )
+                                ], width=6),
+                                dbc.Col([
+                                    dbc.Label("Amount Spent ($)"),
+                                    dbc.Input(
+                                        id="spending-amount-input",
+                                        type="number",
+                                        placeholder="0.00"
+                                    )
+                                ], width=6)
+                            ], className="mb-3"),
+                            dbc.Row([
+                                dbc.Col([
+                                    dbc.Label("Description"),
+                                    dbc.Input(
+                                        id="spending-description-input",
+                                        placeholder="What did you spend on?"
+                                    )
+                                ], width=8),
+                                dbc.Col([
+                                    dbc.Button(
+                                        [html.I(className="fas fa-plus me-2"), "Add Spending"],
+                                        id="add-spending-btn",
+                                        color="warning",
+                                        className="mt-4 w-100"
+                                    )
+                                ], width=4)
+                            ])
+                        ])
+                    ])
+                ], className="modern-card")
+            ])
         ], className="mb-4"),
         
         # Budget Progress Bars
@@ -2433,37 +2500,58 @@ def update_intraday_chart(n_clicks, symbol, interval):
      Output('total-liabilities', 'children'),
      Output('net-worth-total', 'children'),
      Output('net-worth-change', 'children')],
-    Input('interval-component', 'n_intervals')
+    [Input('net-worth-assets-store', 'data'),
+     Input('net-worth-liabilities-store', 'data')]
 )
-def update_net_worth_summary(n):
-    """Update net worth summary cards."""
+def update_net_worth_summary(assets_data, liabilities_data):
+    """Update net worth summary cards with real data."""
     try:
-        # Mock data for demonstration
-        total_assets = 850000
-        total_liabilities = 320000
+        # Calculate totals from actual data
+        total_assets = sum(asset['value'] for asset in assets_data) if assets_data else 0
+        total_liabilities = sum(liability['value'] for liability in liabilities_data) if liabilities_data else 0
         net_worth = total_assets - total_liabilities
-        change_percent = 2.5
+        
+        # Calculate change (simplified - in real app would compare to previous period)
+        change_percent = 2.5 if net_worth > 0 else 0
         
         return (
             f"${total_assets:,.0f}",
             f"${total_liabilities:,.0f}",
             f"${net_worth:,.0f}",
-            f"↗ +{change_percent}% this month"
+            f"↗ +{change_percent}% this month" if net_worth > 0 else "No change"
         )
     except Exception as e:
         return "$0", "$0", "$0", "No data"
 
 @app.callback(
     Output('net-worth-chart', 'figure'),
-    Input('interval-component', 'n_intervals')
+    [Input('net-worth-assets-store', 'data'),
+     Input('net-worth-liabilities-store', 'data')]
 )
-def update_net_worth_chart(n):
-    """Update net worth trend chart."""
+def update_net_worth_chart(assets_data, liabilities_data):
+    """Update net worth trend chart based on current data."""
     try:
-        # Mock historical data
+        # Calculate current net worth
+        current_assets = sum(asset['value'] for asset in assets_data) if assets_data else 0
+        current_liabilities = sum(liability['value'] for liability in liabilities_data) if liabilities_data else 0
+        current_net_worth = current_assets - current_liabilities
+        
+        # Generate historical trend based on current net worth
         dates = pd.date_range(start='2024-01-01', end='2025-09-25', freq='M')
-        base_net_worth = 500000
-        trend = [base_net_worth + i * 2000 + np.random.randint(-5000, 10000) for i in range(len(dates))]
+        
+        # Create a trend that leads to current net worth
+        growth_rate = 0.02  # 2% monthly growth
+        trend = []
+        for i, date in enumerate(dates):
+            if i == len(dates) - 1:  # Last point is current net worth
+                trend.append(current_net_worth)
+            else:
+                # Work backwards from current value
+                months_back = len(dates) - 1 - i
+                past_value = current_net_worth / ((1 + growth_rate) ** months_back)
+                # Add some randomness
+                variation = np.random.uniform(-0.05, 0.05) * past_value
+                trend.append(max(0, past_value + variation))
         
         fig = go.Figure()
         fig.add_trace(go.Scatter(
@@ -2472,7 +2560,8 @@ def update_net_worth_chart(n):
             mode='lines+markers',
             name='Net Worth',
             line=dict(color='#667eea', width=3),
-            marker=dict(size=6)
+            marker=dict(size=6),
+            hovertemplate='<b>%{x|%B %Y}</b><br>Net Worth: $%{y:,.0f}<extra></extra>'
         ))
         
         fig.update_layout(
@@ -2493,86 +2582,105 @@ def update_net_worth_chart(n):
     [Output('assets-table', 'children'),
      Output('asset-name-input', 'value'),
      Output('asset-value-input', 'value'),
-     Output('asset-type-select', 'value')],
+     Output('asset-type-select', 'value'),
+     Output('net-worth-assets-store', 'data')],
     [Input('add-asset-btn', 'n_clicks')],
     [State('asset-type-select', 'value'),
      State('asset-name-input', 'value'),
-     State('asset-value-input', 'value')]
+     State('asset-value-input', 'value'),
+     State('net-worth-assets-store', 'data')]
 )
-def handle_add_asset(n_clicks, asset_type, asset_name, asset_value):
-    """Handle adding new assets."""
-    # Mock assets data
-    assets_data = [
-        {"Type": "Real Estate", "Name": "Primary Home", "Value": "$450,000"},
-        {"Type": "Investment", "Name": "Stock Portfolio", "Value": "$280,000"},
-        {"Type": "Cash", "Name": "Savings Account", "Value": "$120,000"}
-    ]
+def handle_add_asset(n_clicks, asset_type, asset_name, asset_value, current_assets):
+    """Handle adding new assets and update store."""
+    assets_data = current_assets or []
     
+    # Add new asset if form was submitted
     if n_clicks and asset_type and asset_name and asset_value:
-        # In a real app, this would make an API call
-        assets_data.append({
-            "Type": asset_type.title().replace('_', ' '),
-            "Name": asset_name,
-            "Value": f"${float(asset_value):,.0f}"
+        try:
+            new_asset = {
+                "type": asset_type,
+                "name": asset_name,
+                "value": float(asset_value)
+            }
+            assets_data.append(new_asset)
+        except (ValueError, TypeError):
+            pass  # Invalid input, don't add
+    
+    # Create display table
+    display_data = []
+    for asset in assets_data:
+        display_data.append({
+            "Type": asset['type'].title().replace('_', ' '),
+            "Name": asset['name'],
+            "Value": f"${asset['value']:,.0f}"
         })
     
-    # Create table
     table = dbc.Table.from_dataframe(
-        pd.DataFrame(assets_data),
+        pd.DataFrame(display_data),
         striped=True,
         bordered=True,
         hover=True,
         responsive=True,
         className="mb-0"
-    )
+    ) if display_data else html.P("No assets added yet.", className="text-muted")
     
     # Clear form if asset was added
     if n_clicks and asset_type and asset_name and asset_value:
-        return table, "", "", None
+        return table, "", "", None, assets_data
     
-    return table, dash.no_update, dash.no_update, dash.no_update
+    return table, dash.no_update, dash.no_update, dash.no_update, assets_data
 
 @app.callback(
     [Output('liabilities-table', 'children'),
      Output('liability-name-input', 'value'),
      Output('liability-balance-input', 'value'),
-     Output('liability-type-select', 'value')],
+     Output('liability-type-select', 'value'),
+     Output('net-worth-liabilities-store', 'data')],
     [Input('add-liability-btn', 'n_clicks')],
     [State('liability-type-select', 'value'),
      State('liability-name-input', 'value'),
-     State('liability-balance-input', 'value')]
+     State('liability-balance-input', 'value'),
+     State('net-worth-liabilities-store', 'data')]
 )
-def handle_add_liability(n_clicks, liability_type, liability_name, liability_balance):
-    """Handle adding new liabilities."""
-    # Mock liabilities data
-    liabilities_data = [
-        {"Type": "Mortgage", "Name": "Home Mortgage", "Balance": "$320,000"},
-        {"Type": "Auto Loan", "Name": "Car Loan", "Balance": "$25,000"}
-    ]
+def handle_add_liability(n_clicks, liability_type, liability_name, liability_balance, current_liabilities):
+    """Handle adding new liabilities and update store."""
+    liabilities_data = current_liabilities or []
     
+    # Add new liability if form was submitted
     if n_clicks and liability_type and liability_name and liability_balance:
-        # In a real app, this would make an API call
-        liabilities_data.append({
-            "Type": liability_type.title().replace('_', ' '),
-            "Name": liability_name,
-            "Balance": f"${float(liability_balance):,.0f}"
+        try:
+            new_liability = {
+                "type": liability_type,
+                "name": liability_name,
+                "value": float(liability_balance)
+            }
+            liabilities_data.append(new_liability)
+        except (ValueError, TypeError):
+            pass  # Invalid input, don't add
+    
+    # Create display table
+    display_data = []
+    for liability in liabilities_data:
+        display_data.append({
+            "Type": liability['type'].title().replace('_', ' '),
+            "Name": liability['name'],
+            "Balance": f"${liability['value']:,.0f}"
         })
     
-    # Create table
     table = dbc.Table.from_dataframe(
-        pd.DataFrame(liabilities_data),
+        pd.DataFrame(display_data),
         striped=True,
         bordered=True,
         hover=True,
         responsive=True,
         className="mb-0"
-    )
+    ) if display_data else html.P("No liabilities added yet.", className="text-muted")
     
     # Clear form if liability was added
     if n_clicks and liability_type and liability_name and liability_balance:
-        return table, "", "", None
+        return table, "", "", None, liabilities_data
     
-    return table, dash.no_update, dash.no_update, dash.no_update
+    return table, dash.no_update, dash.no_update, dash.no_update, liabilities_data
 
 
 # Budgeting Callbacks
@@ -2581,15 +2689,18 @@ def handle_add_liability(n_clicks, liability_type, liability_name, liability_bal
      Output('total-spending', 'children'),
      Output('total-budget', 'children'),
      Output('budget-remaining', 'children')],
-    Input('interval-component', 'n_intervals')
+    Input('budgets-store', 'data')
 )
-def update_budget_summary(n):
-    """Update budget summary cards."""
+def update_budget_summary(budgets_data):
+    """Update budget summary cards with real data."""
     try:
-        # Mock data for demonstration
-        monthly_income = 8500
-        total_spending = 6200
-        total_budget = 7500
+        if not budgets_data:
+            return "$0", "$0", "$0", "$0"
+        
+        # Calculate totals from actual budget data
+        total_budget = sum(budget['budget'] for budget in budgets_data)
+        total_spending = sum(budget['spent'] for budget in budgets_data)
+        monthly_income = total_budget * 1.15  # Assume income is 15% more than budget
         remaining = total_budget - total_spending
         
         return (
@@ -2603,15 +2714,18 @@ def update_budget_summary(n):
 
 @app.callback(
     Output('budget-categories-chart', 'figure'),
-    Input('interval-component', 'n_intervals')
+    Input('budgets-store', 'data')
 )
-def update_budget_chart(n):
-    """Update budget vs spending chart."""
+def update_budget_chart(budgets_data):
+    """Update budget vs spending chart with real data."""
     try:
-        # Mock budget data
-        categories = ['Housing', 'Transportation', 'Food', 'Entertainment', 'Healthcare', 'Shopping']
-        budgets = [2500, 800, 600, 400, 300, 500]
-        spending = [2400, 750, 650, 350, 280, 420]
+        if not budgets_data:
+            return {}
+        
+        # Extract data from budget store
+        categories = [budget['name'] for budget in budgets_data]
+        budgets = [budget['budget'] for budget in budgets_data]
+        spending = [budget['spent'] for budget in budgets_data]
         
         fig = go.Figure()
         
@@ -2619,14 +2733,16 @@ def update_budget_chart(n):
             name='Budget',
             x=categories,
             y=budgets,
-            marker_color='#667eea'
+            marker_color='#667eea',
+            hovertemplate='<b>%{x}</b><br>Budget: $%{y:,.0f}<extra></extra>'
         ))
         
         fig.add_trace(go.Bar(
             name='Spent',
             x=categories,
             y=spending,
-            marker_color='#f5576c'
+            marker_color='#f5576c',
+            hovertemplate='<b>%{x}</b><br>Spent: $%{y:,.0f}<extra></extra>'
         ))
         
         fig.update_layout(
@@ -2646,63 +2762,73 @@ def update_budget_chart(n):
 @app.callback(
     [Output('budget-progress-bars', 'children'),
      Output('budget-category-select', 'value'),
-     Output('budget-amount-input', 'value')],
+     Output('budget-amount-input', 'value'),
+     Output('budgets-store', 'data')],
     [Input('create-budget-btn', 'n_clicks')],
     [State('budget-category-select', 'value'),
-     State('budget-amount-input', 'value')]
+     State('budget-amount-input', 'value'),
+     State('budgets-store', 'data')]
 )
-def handle_create_budget(n_clicks, category, amount):
+def handle_create_budget(n_clicks, category, amount, current_budgets):
     """Handle creating new budgets and update progress bars."""
-    # Mock budget progress data
-    budget_data = [
-        {"category": "Housing", "budget": 2500, "spent": 2400, "percentage": 96},
-        {"category": "Transportation", "budget": 800, "spent": 750, "percentage": 94},
-        {"category": "Food", "budget": 600, "spent": 650, "percentage": 108},
-        {"category": "Entertainment", "budget": 400, "spent": 350, "percentage": 88},
-        {"category": "Healthcare", "budget": 300, "spent": 280, "percentage": 93},
-        {"category": "Shopping", "budget": 500, "spent": 420, "percentage": 84}
-    ]
+    budget_data = current_budgets or []
     
+    # Add new budget if form was submitted
     if n_clicks and category and amount:
-        # In a real app, this would make an API call
-        budget_data.append({
-            "category": category.title(),
-            "budget": float(amount),
-            "spent": 0,
-            "percentage": 0
-        })
+        try:
+            # Check if budget already exists for this category
+            existing_budget = next((b for b in budget_data if b['category'] == category), None)
+            if existing_budget:
+                # Update existing budget
+                existing_budget['budget'] = float(amount)
+                existing_budget['name'] = category.title().replace('_', ' ')
+            else:
+                # Add new budget
+                new_budget = {
+                    "category": category,
+                    "name": category.title().replace('_', ' '),
+                    "budget": float(amount),
+                    "spent": 0  # Start with 0 spending
+                }
+                budget_data.append(new_budget)
+        except (ValueError, TypeError):
+            pass  # Invalid input, don't add
     
-    # Create progress bars
+    # Create progress bars from current data
     progress_bars = []
     for budget in budget_data:
-        color = "success" if budget["percentage"] <= 80 else "warning" if budget["percentage"] <= 100 else "danger"
+        percentage = (budget['spent'] / budget['budget'] * 100) if budget['budget'] > 0 else 0
+        color = "success" if percentage <= 80 else "warning" if percentage <= 100 else "danger"
         
         progress_bars.append(
             dbc.Row([
                 dbc.Col([
-                    html.H6(f"{budget['category']}", className="mb-1"),
+                    html.H6(f"{budget['name']}", className="mb-1"),
                     html.Small(f"${budget['spent']:,.0f} of ${budget['budget']:,.0f}", className="text-muted")
                 ], width=4),
                 dbc.Col([
                     dbc.Progress(
-                        value=min(budget["percentage"], 100),
+                        value=min(percentage, 100),
                         color=color,
                         striped=True,
-                        animated=True if budget["percentage"] > 100 else False,
+                        animated=True if percentage > 100 else False,
                         className="mb-2"
                     )
                 ], width=6),
                 dbc.Col([
-                    html.Small(f"{budget['percentage']:.0f}%", className="text-muted")
+                    html.Small(f"{percentage:.0f}%", className="text-muted")
                 ], width=2)
             ], className="mb-3")
         )
     
+    if not progress_bars:
+        progress_bars = [html.P("No budgets created yet.", className="text-muted")]
+    
     # Clear form if budget was created
     if n_clicks and category and amount:
-        return progress_bars, None, ""
+        return progress_bars, None, "", budget_data
     
-    return progress_bars, dash.no_update, dash.no_update
+    return progress_bars, dash.no_update, dash.no_update, budget_data
 
 @app.callback(
     Output('recent-transactions-table', 'children'),
@@ -2729,6 +2855,60 @@ def update_recent_transactions(n):
     )
     
     return table
+
+
+# Populate spending category dropdown with current budgets
+@app.callback(
+    Output('spending-category-select', 'options'),
+    Input('budgets-store', 'data')
+)
+def update_spending_categories(budgets_data):
+    """Update spending category dropdown with available budgets."""
+    if not budgets_data:
+        return []
+    
+    options = []
+    for budget in budgets_data:
+        options.append({
+            "label": budget['name'],
+            "value": budget['category']
+        })
+    
+    return options
+
+
+# Handle adding spending to budgets
+@app.callback(
+    [Output('spending-category-select', 'value'),
+     Output('spending-amount-input', 'value'),
+     Output('spending-description-input', 'value'),
+     Output('budgets-store', 'data', allow_duplicate=True)],
+    [Input('add-spending-btn', 'n_clicks')],
+    [State('spending-category-select', 'value'),
+     State('spending-amount-input', 'value'),
+     State('spending-description-input', 'value'),
+     State('budgets-store', 'data')],
+    prevent_initial_call=True
+)
+def handle_add_spending(n_clicks, category, amount, description, current_budgets):
+    """Handle adding spending to budgets."""
+    if not n_clicks or not category or not amount:
+        return dash.no_update, dash.no_update, dash.no_update, dash.no_update
+    
+    try:
+        # Find the budget to update
+        budget_data = current_budgets or []
+        for budget in budget_data:
+            if budget['category'] == category:
+                budget['spent'] += float(amount)
+                break
+        
+        # Clear form after successful addition
+        return None, "", "", budget_data
+        
+    except (ValueError, TypeError):
+        # Invalid input, don't update
+        return dash.no_update, dash.no_update, dash.no_update, dash.no_update
 
 
 if __name__ == '__main__':
