@@ -1085,10 +1085,10 @@ def create_market_data_layout():
         # Live Market Data Header
         dbc.Row([
             dbc.Col([
-                dbc.Alert([
-                    html.I(className="fas fa-broadcast-tower me-2"),
-                    "Live Market Data powered by Alpha Vantage • Updates every 5 minutes"
-                ], color="info", className="mb-4")
+                    dbc.Alert([
+                        html.I(className="fas fa-broadcast-tower me-2"),
+                        "Live Market Data powered by Alpha Vantage • Updates every 5 minutes"
+                    ], color="dark", className="mb-4 border-0", style={"backgroundColor": "#1a2332", "color": "#e4e4e7"})
             ])
         ]),
         
