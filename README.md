@@ -98,7 +98,7 @@ pip install -r requirements.txt
 
 1. **Clone the Repository:**
    ```bash
-   git clone https://github.com/yourusername/fpti.git
+   git clone https://github.com/Xombi17/fpti.git
    cd fpti
    ```
 
@@ -309,8 +309,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📞 Support
 
-- **Issues**: [GitHub Issues](https://github.com/yourusername/fpti/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/yourusername/fpti/discussions)
+- **Issues**: [GitHub Issues](https://github.com/Xombi17/fpti/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/Xombi17/fpti/discussions)
 - **Email**: your.email@example.com
 
 ## 🎯 Roadmap
