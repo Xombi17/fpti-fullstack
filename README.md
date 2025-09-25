@@ -42,7 +42,7 @@ FPTI is a modern, full-stack financial management application that provides comp
 
 ```bash
 # Clone and setup the project
-git clone https://github.com/yourusername/fpti.git
+git clone https://github.com/Xombi17/fpti.git
 cd fpti
 python -m venv .venv
 .venv\Scripts\activate  # On Windows
