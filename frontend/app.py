@@ -768,17 +768,7 @@ app.layout = dbc.Container([
         n_intervals=0
     ),
     
-    # Modern Header
-    html.Div([
-        dbc.Container([
-            dbc.Row([
-                dbc.Col([
-                    html.H1("FPTI", className="mb-0"),
-                    html.P("Financial Portfolio Tracking Interface", className="subtitle mb-0")
-                ], className="text-center")
-            ])
-        ])
-    ], className="modern-header"),
+   
     
     # Professional Navigation Bar
     html.Div([
