@@ -353,6 +353,182 @@ MOCK_TRANSACTIONS = [
     }
 ]
 
+# Mock data for budget management system
+MOCK_BUDGETS = [
+    {
+        "id": 1,
+        "category": "housing",
+        "name": "Housing",
+        "monthly_budget": 45000.0,
+        "spent": 42000.0,
+        "month": "2024-09",
+        "created_date": "2024-09-01"
+    },
+    {
+        "id": 2,
+        "category": "food",
+        "name": "Food & Dining",
+        "monthly_budget": 15000.0,
+        "spent": 12500.0,
+        "month": "2024-09",
+        "created_date": "2024-09-01"
+    },
+    {
+        "id": 3,
+        "category": "transportation",
+        "name": "Transportation",
+        "monthly_budget": 8000.0,
+        "spent": 6750.0,
+        "month": "2024-09",
+        "created_date": "2024-09-01"
+    },
+    {
+        "id": 4,
+        "category": "entertainment",
+        "name": "Entertainment",
+        "monthly_budget": 5000.0,
+        "spent": 7200.0,  # Over budget
+        "month": "2024-09",
+        "created_date": "2024-09-01"
+    },
+    {
+        "id": 5,
+        "category": "utilities",
+        "name": "Utilities",
+        "monthly_budget": 6000.0,
+        "spent": 5800.0,
+        "month": "2024-09",
+        "created_date": "2024-09-01"
+    },
+    {
+        "id": 6,
+        "category": "healthcare",
+        "name": "Healthcare",
+        "monthly_budget": 4000.0,
+        "spent": 2100.0,
+        "month": "2024-09",
+        "created_date": "2024-09-01"
+    }
+]
+
+MOCK_SPENDING_TRANSACTIONS = [
+    {
+        "id": 1,
+        "category": "housing",
+        "amount": 42000.0,
+        "description": "Monthly rent payment",
+        "date": "2024-09-01",
+        "type": "expense"
+    },
+    {
+        "id": 2,
+        "category": "food",
+        "amount": 3500.0,
+        "description": "Grocery shopping - weekly",
+        "date": "2024-09-02",
+        "type": "expense"
+    },
+    {
+        "id": 3,
+        "category": "transportation",
+        "amount": 2500.0,
+        "description": "Fuel and maintenance",
+        "date": "2024-09-03",
+        "type": "expense"
+    },
+    {
+        "id": 4,
+        "category": "entertainment",
+        "amount": 2800.0,
+        "description": "Movie tickets and dinner",
+        "date": "2024-09-05",
+        "type": "expense"
+    },
+    {
+        "id": 5,
+        "category": "food",
+        "amount": 4200.0,
+        "description": "Restaurant meals",
+        "date": "2024-09-07",
+        "type": "expense"
+    },
+    {
+        "id": 6,
+        "category": "utilities",
+        "amount": 2900.0,
+        "description": "Electricity bill",
+        "date": "2024-09-10",
+        "type": "expense"
+    },
+    {
+        "id": 7,
+        "category": "entertainment",
+        "amount": 4400.0,
+        "description": "Weekend trip expenses",
+        "date": "2024-09-12",
+        "type": "expense"
+    },
+    {
+        "id": 8,
+        "category": "transportation",
+        "amount": 4250.0,
+        "description": "Monthly metro pass and Uber",
+        "date": "2024-09-15",
+        "type": "expense"
+    },
+    {
+        "id": 9,
+        "category": "food",
+        "amount": 4800.0,
+        "description": "Bulk grocery shopping",
+        "date": "2024-09-18",
+        "type": "expense"
+    },
+    {
+        "id": 10,
+        "category": "healthcare",
+        "amount": 2100.0,
+        "description": "Medical checkup and medicines",
+        "date": "2024-09-20",
+        "type": "expense"
+    },
+    {
+        "id": 11,
+        "category": "utilities",
+        "amount": 2900.0,
+        "description": "Internet and phone bills",
+        "date": "2024-09-22",
+        "type": "expense"
+    }
+]
+
+MOCK_INCOME_SOURCES = [
+    {
+        "id": 1,
+        "source": "salary",
+        "name": "Primary Job Salary",
+        "monthly_amount": 85000.0,
+        "date": "2024-09-01",
+        "type": "recurring"
+    },
+    {
+        "id": 2,
+        "source": "freelance",
+        "name": "Freelance Projects",
+        "monthly_amount": 25000.0,
+        "date": "2024-09-15",
+        "type": "variable"
+    },
+    {
+        "id": 3,
+        "source": "investments",
+        "name": "Investment Returns",
+        "monthly_amount": 8500.0,
+        "date": "2024-09-01",
+        "type": "passive"
+    }
+]
+
 def fetch_intraday_data(symbol, interval="5min"):
     """Fetch intraday data for a symbol using Yahoo Finance."""
     try:
@@ -1328,193 +1504,304 @@ def create_net_worth_layout():
 # Budgeting Tab Content
 def create_budgeting_layout():
     return [
-        # Budget Overview Cards
+        # Page Header with Date Selection
+        dbc.Row([
+            dbc.Col([
+                html.H2([
+                    html.I(className="fas fa-calculator me-3"),
+                    "Budget Management"
+                ], className="page-title mb-0"),
+                html.P("Track your income, expenses, and financial goals", className="page-subtitle")
+            ], width=8),
+            dbc.Col([
+                dbc.Card([
+                    dbc.CardBody([
+                        html.H6("Budget Period", className="mb-2"),
+                        dbc.Select(
+                            id="budget-period-select",
+                            options=[
+                                {"label": "September 2024", "value": "2024-09"},
+                                {"label": "October 2024", "value": "2024-10"},
+                                {"label": "November 2024", "value": "2024-11"}
+                            ],
+                            value="2024-09",
+                            className="modern-input"
+                        )
+                    ])
+                ], className="modern-card")
+            ], width=4)
+        ], className="mb-4"),
+        
+        # Financial Overview Cards
         dbc.Row([
             dbc.Col([
                 dbc.Card([
                     dbc.CardBody([
-                        html.H4([
-                            html.I(className="fas fa-dollar-sign me-2"),
-                            "Monthly Income"
-                        ]),
-                        html.H2(id="monthly-income", className="text-success mb-0"),
-                        html.Small("Total income this month", className="text-muted")
+                        html.Div([
+                            html.I(className="fas fa-money-bill-wave text-success", style={"font-size": "2rem"}),
+                        ], className="d-flex justify-content-center mb-3"),
+                        html.H4("Monthly Income", className="text-center mb-2"),
+                        html.H2(id="monthly-income", className="text-success mb-1 text-center"),
+                        html.Small(id="income-sources", className="text-muted d-block text-center")
+                    ])
+                ], className="modern-card success")
+            ], width=3),
+            dbc.Col([
+                dbc.Card([
+                    dbc.CardBody([
+                        html.Div([
+                            html.I(className="fas fa-shopping-cart text-danger", style={"font-size": "2rem"}),
+                        ], className="d-flex justify-content-center mb-3"),
+                        html.H4("Total Spending", className="text-center mb-2"),
+                        html.H2(id="total-spending", className="text-danger mb-1 text-center"),
+                        html.Small(id="spending-trend", className="text-muted d-block text-center")
                     ])
                 ], className="modern-card")
             ], width=3),
             dbc.Col([
                 dbc.Card([
                     dbc.CardBody([
-                        html.H4([
-                            html.I(className="fas fa-shopping-cart me-2"),
-                            "Total Spending"
-                        ]),
-                        html.H2(id="total-spending", className="text-danger mb-0"),
-                        html.Small("Total expenses this month", className="text-muted")
+                        html.Div([
+                            html.I(className="fas fa-piggy-bank text-info", style={"font-size": "2rem"}),
+                        ], className="d-flex justify-content-center mb-3"),
+                        html.H4("Total Budget", className="text-center mb-2"),
+                        html.H2(id="total-budget", className="text-info mb-1 text-center"),
+                        html.Small(id="budget-categories", className="text-muted d-block text-center")
                     ])
-                ], className="modern-card")
+                ], className="modern-card info")
             ], width=3),
             dbc.Col([
                 dbc.Card([
                     dbc.CardBody([
-                        html.H4([
-                            html.I(className="fas fa-piggy-bank me-2"),
-                            "Total Budget"
-                        ]),
-                        html.H2(id="total-budget", className="text-info mb-0"),
-                        html.Small("Allocated budget this month", className="text-muted")
-                    ])
-                ], className="modern-card")
-            ], width=3),
-            dbc.Col([
-                dbc.Card([
-                    dbc.CardBody([
-                        html.H4([
-                            html.I(className="fas fa-chart-pie me-2"),
-                            "Remaining"
-                        ]),
-                        html.H2(id="budget-remaining", className="text-primary mb-0"),
-                        html.Small("Available budget", className="text-muted")
+                        html.Div([
+                            html.I(id="savings-icon", className="fas fa-chart-line text-primary", style={"font-size": "2rem"}),
+                        ], className="d-flex justify-content-center mb-3"),
+                        html.H4("Net Savings", className="text-center mb-2"),
+                        html.H2(id="net-savings", className="text-primary mb-1 text-center"),
+                        html.Small(id="savings-rate", className="text-muted d-block text-center")
                     ])
                 ], className="modern-card")
             ], width=3),
         ], className="mb-4"),
         
-        # Budget Categories Chart
+        # Main Budget Dashboard
         dbc.Row([
+            # Budget Categories & Progress
             dbc.Col([
                 dbc.Card([
-                    dbc.CardBody([
-                        html.H4([
-                            html.I(className="fas fa-chart-donut me-2"),
-                            "Budget vs Spending by Category"
-                        ]),
-                        dcc.Graph(id="budget-categories-chart")
-                    ])
-                ], className="modern-card")
-            ], width=8),
-            dbc.Col([
-                dbc.Card([
-                    dbc.CardBody([
-                        html.H4([
-                            html.I(className="fas fa-plus-circle me-2"),
-                            "Create Budget"
-                        ]),
-                        dbc.Form([
-                            dbc.Label("Budget Category"),
-                            dbc.Select(
-                                id="budget-category-select",
-                                options=[
-                                    {"label": "Housing", "value": "housing"},
-                                    {"label": "Transportation", "value": "transportation"},
-                                    {"label": "Food & Dining", "value": "food"},
-                                    {"label": "Entertainment", "value": "entertainment"},
-                                    {"label": "Healthcare", "value": "healthcare"},
-                                    {"label": "Shopping", "value": "shopping"},
-                                    {"label": "Utilities", "value": "utilities"},
-                                    {"label": "Insurance", "value": "insurance"},
-                                    {"label": "Education", "value": "education"},
-                                    {"label": "Personal Care", "value": "personal_care"},
-                                    {"label": "Travel", "value": "travel"},
-                                    {"label": "Other", "value": "other"}
-                                ],
-                                className="modern-input mb-3"
-                            ),
-                            dbc.Label("Monthly Budget Amount (₹)"),
-                            dbc.Input(
-                                id="budget-amount-input",
-                                type="number",
-                                placeholder="0.00",
-                                className="mb-3"
-                            ),
-                            dbc.Button(
-                                [html.I(className="fas fa-plus me-2"), "Create Budget"],
-                                id="create-budget-btn",
-                                color="primary",
-                                className="w-100"
+                    dbc.CardHeader([
+                        html.Div([
+                            html.H5([
+                                html.I(className="fas fa-list-alt me-2"),
+                                "Budget Categories"
+                            ], className="mb-0"),
+                            dbc.Badge(
+                                id="categories-count",
+                                color="light",
+                                className="ms-2"
                             )
+                        ], className="d-flex justify-content-between align-items-center")
+                    ]),
+                    dbc.CardBody([
+                        html.Div(id="budget-categories-list")
+                    ])
+                ], className="modern-card mb-4")
+            ], width=8),
+            
+            # Quick Actions Panel
+            dbc.Col([
+                # Add New Budget Category
+                dbc.Card([
+                    dbc.CardHeader([
+                        html.H5([
+                            html.I(className="fas fa-plus-circle me-2"),
+                            "Add Budget Category"
+                        ], className="mb-0")
+                    ]),
+                    dbc.CardBody([
+                        dbc.Form([
+                            dbc.Row([
+                                dbc.Col([
+                                    dbc.Label("Category Name", className="fw-bold"),
+                                    dbc.Select(
+                                        id="budget-category-select",
+                                        options=[
+                                            {"label": "Housing", "value": "housing"},
+                                            {"label": "Transportation", "value": "transportation"},
+                                            {"label": "Food & Dining", "value": "food"},
+                                            {"label": "Entertainment", "value": "entertainment"},
+                                            {"label": "Healthcare", "value": "healthcare"},
+                                            {"label": "Shopping", "value": "shopping"},
+                                            {"label": "Utilities", "value": "utilities"},
+                                            {"label": "Insurance", "value": "insurance"},
+                                            {"label": "Education", "value": "education"},
+                                            {"label": "Personal Care", "value": "personal_care"},
+                                            {"label": "Travel", "value": "travel"},
+                                            {"label": "Other", "value": "other"}
+                                        ],
+                                        className="modern-input"
+                                    )
+                                ], width=12, className="mb-3"),
+                                dbc.Col([
+                                    dbc.Label("Monthly Budget", className="fw-bold"),
+                                    dbc.InputGroup([
+                                        dbc.InputGroupText("₹"),
+                                        dbc.Input(
+                                            id="budget-amount-input",
+                                            type="number",
+                                            placeholder="5000",
+                                            className="modern-input"
+                                        )
+                                    ])
+                                ], width=12, className="mb-3"),
+                                dbc.Col([
+                                    dbc.Button(
+                                        [
+                                            html.I(className="fas fa-plus me-2"),
+                                            "Create Budget"
+                                        ],
+                                        id="create-budget-btn",
+                                        color="success",
+                                        className="modern-btn w-100"
+                                    )
+                                ], width=12)
+                            ])
+                        ])
+                    ])
+                ], className="modern-card mb-4"),
+                
+                # Add Spending
+                dbc.Card([
+                    dbc.CardHeader([
+                        html.H5([
+                            html.I(className="fas fa-shopping-cart me-2"),
+                            "Add Expense"
+                        ], className="mb-0")
+                    ]),
+                    dbc.CardBody([
+                        dbc.Form([
+                            dbc.Row([
+                                dbc.Col([
+                                    dbc.Label("Category", className="fw-bold"),
+                                    dbc.Select(
+                                        id="spending-category-select",
+                                        placeholder="Choose category...",
+                                        className="modern-input"
+                                    )
+                                ], width=12, className="mb-3"),
+                                dbc.Col([
+                                    dbc.Label("Amount", className="fw-bold"),
+                                    dbc.InputGroup([
+                                        dbc.InputGroupText("₹"),
+                                        dbc.Input(
+                                            id="spending-amount-input",
+                                            type="number",
+                                            placeholder="500",
+                                            className="modern-input"
+                                        )
+                                    ])
+                                ], width=12, className="mb-3"),
+                                dbc.Col([
+                                    dbc.Label("Description", className="fw-bold"),
+                                    dbc.Input(
+                                        id="spending-description-input",
+                                        placeholder="What did you spend on?",
+                                        className="modern-input"
+                                    )
+                                ], width=12, className="mb-3"),
+                                dbc.Col([
+                                    dbc.Button(
+                                        [
+                                            html.I(className="fas fa-plus me-2"),
+                                            "Add Expense"
+                                        ],
+                                        id="add-spending-btn",
+                                        color="warning",
+                                        className="modern-btn w-100"
+                                    )
+                                ], width=12)
+                            ])
                         ])
                     ])
                 ], className="modern-card")
             ], width=4)
         ], className="mb-4"),
         
-        # Add Spending Section
+        # Income & Savings Goals
         dbc.Row([
+            # Income Sources
             dbc.Col([
                 dbc.Card([
+                    dbc.CardHeader([
+                        html.H5([
+                            html.I(className="fas fa-money-bill-trend-up me-2"),
+                            "Income Sources"
+                        ], className="mb-0")
+                    ]),
                     dbc.CardBody([
-                        html.H4([
-                            html.I(className="fas fa-shopping-cart me-2"),
-                            "Add Spending"
-                        ]),
-                        dbc.Form([
-                            dbc.Row([
-                                dbc.Col([
-                                    dbc.Label("Select Budget Category"),
-                                    dbc.Select(
-                                        id="spending-category-select",
-                                        placeholder="Choose category...",
-                                        className="modern-input"
-                                    )
-                                ], width=6),
-                                dbc.Col([
-                                    dbc.Label("Amount Spent (₹)"),
-                                    dbc.Input(
-                                        id="spending-amount-input",
-                                        type="number",
-                                        placeholder="0.00"
-                                    )
-                                ], width=6)
-                            ], className="mb-3"),
-                            dbc.Row([
-                                dbc.Col([
-                                    dbc.Label("Description"),
-                                    dbc.Input(
-                                        id="spending-description-input",
-                                        placeholder="What did you spend on?"
-                                    )
-                                ], width=8),
-                                dbc.Col([
-                                    dbc.Button(
-                                        [html.I(className="fas fa-plus me-2"), "Add Spending"],
-                                        id="add-spending-btn",
-                                        color="warning",
-                                        className="mt-4 w-100"
-                                    )
-                                ], width=4)
-                            ])
-                        ])
+                        html.Div(id="income-sources-table")
                     ])
                 ], className="modern-card")
-            ])
-        ], className="mb-4"),
-        
-        # Budget Progress Bars
-        dbc.Row([
+            ], width=6),
+            
+            # Savings Goals
             dbc.Col([
                 dbc.Card([
+                    dbc.CardHeader([
+                        html.H5([
+                            html.I(className="fas fa-bullseye me-2"),
+                            "Savings Goals"
+                        ], className="mb-0")
+                    ]),
                     dbc.CardBody([
-                        html.H4([
-                            html.I(className="fas fa-tasks me-2"),
-                            "Budget Progress"
-                        ]),
-                        html.Div(id="budget-progress-bars")
+                        html.Div(id="savings-goals-list")
                     ])
                 ], className="modern-card")
-            ])
+            ], width=6)
         ], className="mb-4"),
         
-        # Recent Transactions
+        # Budget Analysis Charts
         dbc.Row([
             dbc.Col([
                 dbc.Card([
+                    dbc.CardHeader([
+                        html.H5([
+                            html.I(className="fas fa-chart-column me-2"),
+                            "Budget vs Actual Spending"
+                        ], className="mb-0")
+                    ]),
                     dbc.CardBody([
-                        html.H4([
+                        dcc.Graph(id="budget-vs-actual-chart")
+                    ])
+                ], className="modern-card")
+            ], width=8),
+            dbc.Col([
+                dbc.Card([
+                    dbc.CardHeader([
+                        html.H5([
+                            html.I(className="fas fa-chart-pie me-2"),
+                            "Spending Distribution"
+                        ], className="mb-0")
+                    ]),
+                    dbc.CardBody([
+                        dcc.Graph(id="spending-distribution-chart")
+                    ])
+                ], className="modern-card")
+            ], width=4)
+        ], className="mb-4"),
+        
+        # Recent Activity
+        dbc.Row([
+            dbc.Col([
+                dbc.Card([
+                    dbc.CardHeader([
+                        html.H5([
                             html.I(className="fas fa-history me-2"),
                             "Recent Transactions"
-                        ]),
-                        html.Div(id="recent-transactions-table")
+                        ], className="mb-0")
+                    ]),
+                    dbc.CardBody([
+                        html.Div(id="budget-recent-transactions-table")
                     ])
                 ], className="modern-card")
             ])
@@ -3404,35 +3691,7 @@ def handle_add_liability(n_clicks, liability_type, liability_name, liability_bal
     return table, dash.no_update, dash.no_update, dash.no_update, liabilities_data
 
 
-# Budgeting Callbacks
-@app.callback(
-    [Output('monthly-income', 'children'),
-     Output('total-spending', 'children'),
-     Output('total-budget', 'children'),
-     Output('budget-remaining', 'children')],
-    Input('budgets-store', 'data')
-)
-def update_budget_summary(budgets_data):
-    """Update budget summary cards with real data."""
-    try:
-        if not budgets_data:
-            return "₹0", "₹0", "₹0", "₹0"
-        
-        # Calculate totals from actual budget data
-        total_budget = sum(budget['budget'] for budget in budgets_data)
-        total_spending = sum(budget['spent'] for budget in budgets_data)
-        monthly_income = total_budget * 1.15  # Assume income is 15% more than budget
-        remaining = total_budget - total_spending
-        
-        return (
-            f"₹{monthly_income:,.0f}",
-            f"₹{total_spending:,.0f}",
-            f"₹{total_budget:,.0f}",
-            f"₹{remaining:,.0f}"
-        )
-    except Exception as e:
-        return "₹0", "₹0", "₹0", "₹0"
-
+# Old Budgeting Callbacks (kept for backward compatibility with existing components)
 @app.callback(
     Output('budget-categories-chart', 'figure'),
     Input('budgets-store', 'data')
@@ -3481,8 +3740,7 @@ def update_budget_chart(budgets_data):
         return {}
 
 @app.callback(
-    [Output('budget-progress-bars', 'children'),
-     Output('budget-category-select', 'value'),
+    [Output('budget-category-select', 'value'),
      Output('budget-amount-input', 'value'),
      Output('budgets-store', 'data')],
     [Input('create-budget-btn', 'n_clicks')],
@@ -3491,7 +3749,7 @@ def update_budget_chart(budgets_data):
      State('budgets-store', 'data')]
 )
 def handle_create_budget(n_clicks, category, amount, current_budgets):
-    """Handle creating new budgets and update progress bars."""
+    """Handle creating new budgets."""
     budget_data = current_budgets or []
     
     # Add new budget if form was submitted
@@ -3515,68 +3773,11 @@ def handle_create_budget(n_clicks, category, amount, current_budgets):
         except (ValueError, TypeError):
             pass  # Invalid input, don't add
     
-    # Create progress bars from current data
-    progress_bars = []
-    for budget in budget_data:
-        percentage = (budget['spent'] / budget['budget'] * 100) if budget['budget'] > 0 else 0
-        color = "success" if percentage <= 80 else "warning" if percentage <= 100 else "danger"
-        
-        progress_bars.append(
-            dbc.Row([
-                dbc.Col([
-                    html.H6(f"{budget['name']}", className="mb-1"),
-                    html.Small(f"₹{budget['spent']:,.0f} of ₹{budget['budget']:,.0f}", className="text-muted")
-                ], width=4),
-                dbc.Col([
-                    dbc.Progress(
-                        value=min(percentage, 100),
-                        color=color,
-                        striped=True,
-                        animated=True if percentage > 100 else False,
-                        className="mb-2"
-                    )
-                ], width=6),
-                dbc.Col([
-                    html.Small(f"{percentage:.0f}%", className="text-muted")
-                ], width=2)
-            ], className="mb-3")
-        )
-    
-    if not progress_bars:
-        progress_bars = [html.P("No budgets created yet.", className="text-muted")]
-    
     # Clear form if budget was created
     if n_clicks and category and amount:
-        return progress_bars, None, "", budget_data
+        return None, "", budget_data
     
-    return progress_bars, dash.no_update, dash.no_update, budget_data
-
-@app.callback(
-    Output('recent-transactions-table', 'children'),
-    Input('interval-component', 'n_intervals')
-)
-def update_recent_transactions(n):
-    """Update recent transactions table."""
-    # Mock transaction data
-    transactions_data = [
-        {"Date": "2025-09-24", "Description": "Grocery Store", "Category": "Food", "Amount": "₹7,097"},
-        {"Date": "2025-09-23", "Description": "Petrol Station", "Category": "Transportation", "Amount": "₹3,735"},
-        {"Date": "2025-09-22", "Description": "Electric Bill", "Category": "Utilities", "Amount": "₹9,960"},
-        {"Date": "2025-09-21", "Description": "Restaurant", "Category": "Entertainment", "Amount": "₹5,415"},
-        {"Date": "2025-09-20", "Description": "Pharmacy", "Category": "Healthcare", "Amount": "₹2,406"}
-    ]
-    
-    table = dbc.Table.from_dataframe(
-        pd.DataFrame(transactions_data),
-        striped=True,
-        bordered=True,
-        hover=True,
-        responsive=True,
-        className="mb-0"
-    )
-    
-    return table
-
+    return dash.no_update, dash.no_update, budget_data
 
 # Populate spending category dropdown with current budgets
 @app.callback(
@@ -3630,6 +3831,290 @@ def handle_add_spending(n_clicks, category, amount, description, current_budgets
     except (ValueError, TypeError):
         # Invalid input, don't update
         return dash.no_update, dash.no_update, dash.no_update, dash.no_update
+
+
+# Comprehensive Budget Management Callbacks
+@app.callback(
+    [Output('monthly-income', 'children'),
+     Output('total-spending', 'children'),
+     Output('total-budget', 'children'),
+     Output('net-savings', 'children'),
+     Output('income-sources', 'children'),
+     Output('spending-trend', 'children'),
+     Output('budget-categories', 'children'),
+     Output('savings-rate', 'children'),
+     Output('savings-icon', 'className')],
+    Input('budget-period-select', 'value')
+)
+def update_budget_overview_cards(selected_period):
+    """Update comprehensive budget overview cards."""
+    try:
+        # Calculate income from mock data
+        total_income = sum(source['monthly_amount'] for source in MOCK_INCOME_SOURCES)
+        
+        # Calculate spending from mock data
+        current_month_spending = sum(
+            abs(txn['amount']) for txn in MOCK_SPENDING_TRANSACTIONS 
+            if txn['amount'] < 0
+        )
+        
+        # Calculate total budget
+        total_budget = sum(budget['budget'] for budget in MOCK_BUDGETS)
+        
+        # Calculate net savings
+        net_savings = total_income - current_month_spending
+        
+        # Calculate savings rate
+        savings_rate = (net_savings / total_income * 100) if total_income > 0 else 0
+        
+        # Determine icon and color for savings
+        if savings_rate >= 20:
+            savings_icon = "fas fa-chart-line text-success"
+        elif savings_rate >= 10:
+            savings_icon = "fas fa-chart-line text-warning"
+        else:
+            savings_icon = "fas fa-chart-line text-danger"
+        
+        return (
+            f"₹{total_income:,.0f}",
+            f"₹{current_month_spending:,.0f}",
+            f"₹{total_budget:,.0f}",
+            f"₹{net_savings:,.0f}",
+            f"{len(MOCK_INCOME_SOURCES)} sources",
+            f"vs last month",
+            f"{len(MOCK_BUDGETS)} categories",
+            f"{savings_rate:.1f}% saved",
+            savings_icon
+        )
+    except Exception as e:
+        return "₹0", "₹0", "₹0", "₹0", "0 sources", "No data", "0 categories", "0% saved", "fas fa-chart-line text-muted"
+
+@app.callback(
+    [Output('budget-categories-list', 'children'),
+     Output('categories-count', 'children')],
+    Input('budgets-store', 'data')
+)
+def update_budget_categories_list(budgets_data):
+    """Create detailed budget categories list with progress."""
+    budget_data = budgets_data or MOCK_BUDGETS
+    
+    categories_list = []
+    for budget in budget_data:
+        spent_percentage = (budget['spent'] / budget['budget'] * 100) if budget['budget'] > 0 else 0
+        remaining = budget['budget'] - budget['spent']
+        
+        # Determine status color
+        if spent_percentage <= 70:
+            status_color = "success"
+            status_text = "On Track"
+        elif spent_percentage <= 90:
+            status_color = "warning"
+            status_text = "Close to Limit"
+        elif spent_percentage <= 100:
+            status_color = "warning"
+            status_text = "Near Budget"
+        else:
+            status_color = "danger"
+            status_text = "Over Budget"
+        
+        category_card = dbc.Card([
+            dbc.CardBody([
+                dbc.Row([
+                    dbc.Col([
+                        html.H6(budget['name'], className="mb-1"),
+                        html.Small(f"₹{budget['spent']:,.0f} spent of ₹{budget['budget']:,.0f}", className="text-muted")
+                    ], width=6),
+                    dbc.Col([
+                        dbc.Badge(status_text, color=status_color, className="me-2"),
+                        html.Small(f"₹{remaining:,.0f} left", className="text-muted")
+                    ], width=6, className="text-end")
+                ], className="align-items-center mb-2"),
+                dbc.Progress(
+                    value=min(spent_percentage, 100),
+                    color=status_color,
+                    striped=True,
+                    animated=spent_percentage > 100,
+                    style={"height": "8px"}
+                )
+            ])
+        ], className="mb-2", style={"border": "1px solid #374151"})
+        
+        categories_list.append(category_card)
+    
+    if not categories_list:
+        categories_list = [
+            html.Div([
+                html.I(className="fas fa-plus-circle fa-3x text-muted mb-3"),
+                html.H5("No Budget Categories", className="text-muted"),
+                html.P("Create your first budget category to get started", className="text-muted")
+            ], className="text-center py-4")
+        ]
+    
+    return categories_list, f"{len(budget_data)} categories"
+
+@app.callback(
+    Output('income-sources-table', 'children'),
+    Input('budget-period-select', 'value')
+)
+def update_income_sources_table(selected_period):
+    """Create income sources table."""
+    income_rows = []
+    for source in MOCK_INCOME_SOURCES:
+        income_rows.append(
+            dbc.Row([
+                dbc.Col([
+                    html.Div([
+                        html.I(className="fas fa-money-bill-wave text-success me-2"),
+                        html.Strong(source['name'])
+                    ])
+                ], width=6),
+                dbc.Col([
+                    html.Div(f"₹{source['monthly_amount']:,.0f}", className="text-end fw-bold")
+                ], width=6)
+            ], className="py-2 border-bottom")
+        )
+    
+    total_income = sum(source['monthly_amount'] for source in MOCK_INCOME_SOURCES)
+    income_rows.append(
+        dbc.Row([
+            dbc.Col([
+                html.Strong("Total Monthly Income")
+            ], width=6),
+            dbc.Col([
+                html.Strong(f"₹{total_income:,.0f}", className="text-success")
+            ], width=6, className="text-end")
+        ], className="py-2 mt-2 border-top")
+    )
+    
+    return income_rows
+
+@app.callback(
+    Output('savings-goals-list', 'children'),
+    Input('budget-period-select', 'value')
+)
+def update_savings_goals(selected_period):
+    """Create savings goals display."""
+    # Mock savings goals
+    savings_goals = [
+        {"name": "Emergency Fund", "target": 100000, "current": 45000, "icon": "fas fa-shield-alt"},
+        {"name": "Vacation Fund", "target": 25000, "current": 18500, "icon": "fas fa-plane"},
+        {"name": "New Car", "target": 200000, "current": 65000, "icon": "fas fa-car"}
+    ]
+    
+    goals_list = []
+    for goal in savings_goals:
+        progress = (goal['current'] / goal['target'] * 100) if goal['target'] > 0 else 0
+        remaining = goal['target'] - goal['current']
+        
+        goal_card = html.Div([
+            html.Div([
+                html.I(className=f"{goal['icon']} me-2"),
+                html.Strong(goal['name'])
+            ], className="mb-2"),
+            html.Small(f"₹{goal['current']:,.0f} of ₹{goal['target']:,.0f}", className="text-muted d-block mb-2"),
+            dbc.Progress(
+                value=progress,
+                color="info",
+                style={"height": "6px"}
+            ),
+            html.Small(f"₹{remaining:,.0f} to go", className="text-muted")
+        ], className="mb-3 p-2 border rounded")
+        
+        goals_list.append(goal_card)
+    
+    return goals_list
+
+@app.callback(
+    [Output('budget-vs-actual-chart', 'figure'),
+     Output('spending-distribution-chart', 'figure')],
+    Input('budgets-store', 'data')
+)
+def update_budget_charts(budgets_data):
+    """Update budget analysis charts."""
+    budget_data = budgets_data or MOCK_BUDGETS
+    
+    # Budget vs Actual Chart
+    categories = [budget['name'] for budget in budget_data]
+    budgets = [budget['budget'] for budget in budget_data]
+    spending = [budget['spent'] for budget in budget_data]
+    
+    budget_fig = go.Figure()
+    budget_fig.add_trace(go.Bar(
+        name='Budget',
+        x=categories,
+        y=budgets,
+        marker_color='#3b82f6',
+        hovertemplate='<b>%{x}</b><br>Budget: ₹%{y:,.0f}<extra></extra>'
+    ))
+    
+    budget_fig.add_trace(go.Bar(
+        name='Spent',
+        x=categories,
+        y=spending,
+        marker_color='#ef4444',
+        hovertemplate='<b>%{x}</b><br>Spent: ₹%{y:,.0f}<extra></extra>'
+    ))
+    
+    budget_fig.update_layout(
+        barmode='group',
+        plot_bgcolor='rgba(0,0,0,0)',
+        paper_bgcolor='rgba(0,0,0,0)',
+        font={'family': 'Inter, sans-serif', 'color': '#e4e4e7'},
+        showlegend=True,
+        legend=dict(x=0.7, y=1),
+        margin=dict(l=40, r=40, t=40, b=40)
+    )
+    
+    # Spending Distribution Pie Chart
+    distribution_fig = go.Figure(data=[go.Pie(
+        labels=categories,
+        values=spending,
+        hole=0.4,
+        marker_colors=['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899']
+    )])
+    
+    distribution_fig.update_layout(
+        plot_bgcolor='rgba(0,0,0,0)',
+        paper_bgcolor='rgba(0,0,0,0)',
+        font={'family': 'Inter, sans-serif', 'color': '#e4e4e7'},
+        showlegend=True,
+        legend=dict(x=0, y=0.5),
+        margin=dict(l=20, r=20, t=20, b=20)
+    )
+    
+    return budget_fig, distribution_fig
+
+@app.callback(
+    Output('budget-recent-transactions-table', 'children'),
+    Input('budget-period-select', 'value')
+)
+def update_budget_recent_transactions(selected_period):
+    """Update recent transactions table."""
+    recent_transactions = MOCK_SPENDING_TRANSACTIONS[:10]  # Show last 10
+    
+    transaction_rows = []
+    for txn in recent_transactions:
+        amount_color = "text-danger" if txn['amount'] < 0 else "text-success"
+        amount_text = f"₹{abs(txn['amount']):,.0f}"
+        
+        transaction_rows.append(
+            dbc.Row([
+                dbc.Col([
+                    html.Div([
+                        html.Strong(txn['description']),
+                        html.Small(f" • {txn['category']}", className="text-muted")
+                    ])
+                ], width=6),
+                dbc.Col([
+                    html.Small(txn['date'], className="text-muted")
+                ], width=3),
+                dbc.Col([
+                    html.Div(amount_text, className=f"{amount_color} fw-bold")
+                ], width=3, className="text-end")
+            ], className="py-2 border-bottom")
+        )
+    
+    return transaction_rows
 
 
 if __name__ == '__main__':
