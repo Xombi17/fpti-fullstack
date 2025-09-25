@@ -26,6 +26,22 @@ from yahoo_finance_service import (
 # Load environment variables
 load_dotenv()
 
+# Constants for frequently used strings
+TRANSPARENT_BG = 'rgba(0,0,0,0)'
+FONT_FAMILY = 'Inter, sans-serif'
+CHART_CONTAINER_SLIDE_UP = "chart-container slide-up"
+CHART_CONTAINER_FADE_IN = "chart-container fade-in"
+TEXT_MUTED_BLOCK = "text-muted d-block"
+UNITED_STATES = "United States"
+CURRENCY_FORMAT = '$,.0f'
+
+# Portfolio table columns
+COL_AVG_COST = 'Avg Cost'
+COL_CURRENT_PRICE = 'Current Price'
+COL_MARKET_VALUE = 'Market Value'
+COL_PL_PERCENT = 'P&L %'
+COL_CHANGE_PERCENT = 'Change %'
+
 # Initialize Dash app
 app = dash.Dash(
     __name__,
@@ -309,7 +325,7 @@ def get_mock_search_results(keywords):
                 "symbol": "AAPL",
                 "name": "Apple Inc",
                 "type": "Equity",
-                "region": "United States",
+                "region": UNITED_STATES,
                 "market_open": "09:30",
                 "market_close": "16:00",
                 "timezone": "UTC-04",
@@ -323,7 +339,7 @@ def get_mock_search_results(keywords):
                 "symbol": "GOOGL",
                 "name": "Alphabet Inc Class A",
                 "type": "Equity",
-                "region": "United States",
+                "region": UNITED_STATES,
                 "market_open": "09:30",
                 "market_close": "16:00",
                 "timezone": "UTC-04",
@@ -337,7 +353,7 @@ def get_mock_search_results(keywords):
                 "symbol": keywords.upper(),
                 "name": f"{keywords} Inc",
                 "type": "Equity",
-                "region": "United States",
+                "region": UNITED_STATES,
                 "market_open": "09:30",
                 "market_close": "16:00",
                 "timezone": "UTC-04",
@@ -394,6 +410,14 @@ app.layout = dbc.Container([
                             html.I(className="fas fa-chart-bar me-2"),
                             "Market Data"
                         ], href="#", id="nav-market-data", className="nav-link-custom")),
+                        dbc.NavItem(dbc.NavLink([
+                            html.I(className="fas fa-landmark me-2"),
+                            "Net Worth"
+                        ], href="#", id="nav-net-worth", className="nav-link-custom")),
+                        dbc.NavItem(dbc.NavLink([
+                            html.I(className="fas fa-wallet me-2"),
+                            "Budgeting"
+                        ], href="#", id="nav-budgeting", className="nav-link-custom")),
                     ], pills=True, className="nav-pills-custom justify-content-center")
                 ])
             ])
@@ -487,7 +511,7 @@ def create_dashboard_layout():
                 html.Div([
                     html.H4("Portfolio Value Over Time", className="chart-title"),
                     dcc.Graph(id="portfolio-value-chart", config={'displayModeBar': False})
-                ], className="chart-container slide-up")
+                ], className=CHART_CONTAINER_SLIDE_UP)
             ], width=8),
             
             # Asset Allocation Pie Chart
@@ -495,7 +519,7 @@ def create_dashboard_layout():
                 html.Div([
                     html.H4("Asset Allocation", className="chart-title"),
                     dcc.Graph(id="allocation-pie-chart", config={'displayModeBar': False})
-                ], className="chart-container slide-up")
+                ], className=CHART_CONTAINER_SLIDE_UP)
             ], width=4),
         ], className="mb-4"),
         
@@ -505,7 +529,7 @@ def create_dashboard_layout():
                 html.Div([
                     html.H4("Current Holdings", className="chart-title"),
                     html.Div(id="holdings-table", className="modern-table")
-                ], className="chart-container slide-up")
+                ], className=CHART_CONTAINER_SLIDE_UP)
             ])
         ])
     ]
@@ -518,14 +542,14 @@ def create_analysis_layout():
                 html.Div([
                     html.H4("Performance Metrics", className="chart-title"),
                     html.Div(id="performance-metrics")
-                ], className="chart-container fade-in")
+                ], className=CHART_CONTAINER_FADE_IN)
             ], width=6),
             
             dbc.Col([
                 html.Div([
                     html.H4("Risk Analysis", className="chart-title"),
                     html.Div(id="risk-metrics")
-                ], className="chart-container fade-in")
+                ], className=CHART_CONTAINER_FADE_IN)
             ], width=6),
         ], className="mb-4"),
         
@@ -534,14 +558,14 @@ def create_analysis_layout():
                 html.Div([
                     html.H4("Sector Allocation", className="chart-title"),
                     dcc.Graph(id="sector-allocation-chart", config={'displayModeBar': False})
-                ], className="chart-container slide-up")
+                ], className=CHART_CONTAINER_SLIDE_UP)
             ], width=6),
             
             dbc.Col([
                 html.Div([
                     html.H4("Asset Correlation Matrix", className="chart-title"),
                     dcc.Graph(id="correlation-matrix", config={'displayModeBar': False})
-                ], className="chart-container slide-up")
+                ], className=CHART_CONTAINER_SLIDE_UP)
             ], width=6),
         ])
     ]
@@ -889,6 +913,335 @@ def create_monte_carlo_layout():
         ])
     ]
 
+# Net Worth Tab Content
+def create_net_worth_layout():
+    return [
+        # Net Worth Summary Cards
+        dbc.Row([
+            dbc.Col([
+                dbc.Card([
+                    dbc.CardBody([
+                        html.H4([
+                            html.I(className="fas fa-coins me-2"),
+                            "Total Assets"
+                        ]),
+                        html.H2(id="total-assets", className="text-success mb-0"),
+                        html.Small("Current market value", className="text-muted")
+                    ])
+                ], className="modern-card")
+            ], width=4),
+            dbc.Col([
+                dbc.Card([
+                    dbc.CardBody([
+                        html.H4([
+                            html.I(className="fas fa-credit-card me-2"),
+                            "Total Liabilities"
+                        ]),
+                        html.H2(id="total-liabilities", className="text-danger mb-0"),
+                        html.Small("Outstanding debts", className="text-muted")
+                    ])
+                ], className="modern-card")
+            ], width=4),
+            dbc.Col([
+                dbc.Card([
+                    dbc.CardBody([
+                        html.H4([
+                            html.I(className="fas fa-landmark me-2"),
+                            "Net Worth"
+                        ]),
+                        html.H2(id="net-worth-total", className="text-primary mb-0"),
+                        html.Small(id="net-worth-change", className="text-muted")
+                    ])
+                ], className="modern-card")
+            ], width=4),
+        ], className="mb-4"),
+        
+        # Net Worth Trend Chart
+        dbc.Row([
+            dbc.Col([
+                dbc.Card([
+                    dbc.CardBody([
+                        html.H4([
+                            html.I(className="fas fa-chart-line me-2"),
+                            "Net Worth Trend"
+                        ]),
+                        dcc.Graph(id="net-worth-chart")
+                    ])
+                ], className="modern-card")
+            ])
+        ], className="mb-4"),
+        
+        # Assets and Liabilities Management
+        dbc.Row([
+            dbc.Col([
+                dbc.Card([
+                    dbc.CardBody([
+                        html.H4([
+                            html.I(className="fas fa-plus-circle me-2"),
+                            "Add Asset"
+                        ]),
+                        dbc.Form([
+                            dbc.Row([
+                                dbc.Col([
+                                    dbc.Label("Asset Type"),
+                                    dbc.Select(
+                                        id="asset-type-select",
+                                        options=[
+                                            {"label": "Cash", "value": "cash"},
+                                            {"label": "Investment", "value": "investment"},
+                                            {"label": "Real Estate", "value": "real_estate"},
+                                            {"label": "Vehicle", "value": "vehicle"},
+                                            {"label": "Personal Property", "value": "personal_property"},
+                                            {"label": "Retirement Account", "value": "retirement_account"},
+                                            {"label": "Business", "value": "business"},
+                                            {"label": "Other", "value": "other"}
+                                        ]
+                                    )
+                                ], width=6),
+                                dbc.Col([
+                                    dbc.Label("Asset Name"),
+                                    dbc.Input(id="asset-name-input", placeholder="e.g., Checking Account")
+                                ], width=6)
+                            ], className="mb-3"),
+                            dbc.Row([
+                                dbc.Col([
+                                    dbc.Label("Current Value ($)"),
+                                    dbc.Input(id="asset-value-input", type="number", placeholder="0.00")
+                                ], width=6),
+                                dbc.Col([
+                                    dbc.Button(
+                                        [html.I(className="fas fa-plus me-2"), "Add Asset"],
+                                        id="add-asset-btn",
+                                        color="success",
+                                        className="mt-4"
+                                    )
+                                ], width=6)
+                            ])
+                        ])
+                    ])
+                ], className="modern-card")
+            ], width=6),
+            dbc.Col([
+                dbc.Card([
+                    dbc.CardBody([
+                        html.H4([
+                            html.I(className="fas fa-minus-circle me-2"),
+                            "Add Liability"
+                        ]),
+                        dbc.Form([
+                            dbc.Row([
+                                dbc.Col([
+                                    dbc.Label("Liability Type"),
+                                    dbc.Select(
+                                        id="liability-type-select",
+                                        options=[
+                                            {"label": "Mortgage", "value": "mortgage"},
+                                            {"label": "Auto Loan", "value": "auto_loan"},
+                                            {"label": "Student Loan", "value": "student_loan"},
+                                            {"label": "Credit Card", "value": "credit_card"},
+                                            {"label": "Personal Loan", "value": "personal_loan"},
+                                            {"label": "Business Loan", "value": "business_loan"},
+                                            {"label": "Other", "value": "other"}
+                                        ]
+                                    )
+                                ], width=6),
+                                dbc.Col([
+                                    dbc.Label("Liability Name"),
+                                    dbc.Input(id="liability-name-input", placeholder="e.g., Home Mortgage")
+                                ], width=6)
+                            ], className="mb-3"),
+                            dbc.Row([
+                                dbc.Col([
+                                    dbc.Label("Outstanding Balance ($)"),
+                                    dbc.Input(id="liability-balance-input", type="number", placeholder="0.00")
+                                ], width=6),
+                                dbc.Col([
+                                    dbc.Button(
+                                        [html.I(className="fas fa-plus me-2"), "Add Liability"],
+                                        id="add-liability-btn",
+                                        color="danger",
+                                        className="mt-4"
+                                    )
+                                ], width=6)
+                            ])
+                        ])
+                    ])
+                ], className="modern-card")
+            ], width=6)
+        ], className="mb-4"),
+        
+        # Assets and Liabilities Tables
+        dbc.Row([
+            dbc.Col([
+                dbc.Card([
+                    dbc.CardBody([
+                        html.H4([
+                            html.I(className="fas fa-list me-2"),
+                            "Assets"
+                        ]),
+                        html.Div(id="assets-table")
+                    ])
+                ], className="modern-card")
+            ], width=6),
+            dbc.Col([
+                dbc.Card([
+                    dbc.CardBody([
+                        html.H4([
+                            html.I(className="fas fa-list me-2"),
+                            "Liabilities"
+                        ]),
+                        html.Div(id="liabilities-table")
+                    ])
+                ], className="modern-card")
+            ], width=6)
+        ])
+    ]
+
+# Budgeting Tab Content
+def create_budgeting_layout():
+    return [
+        # Budget Overview Cards
+        dbc.Row([
+            dbc.Col([
+                dbc.Card([
+                    dbc.CardBody([
+                        html.H4([
+                            html.I(className="fas fa-dollar-sign me-2"),
+                            "Monthly Income"
+                        ]),
+                        html.H2(id="monthly-income", className="text-success mb-0"),
+                        html.Small("Total income this month", className="text-muted")
+                    ])
+                ], className="modern-card")
+            ], width=3),
+            dbc.Col([
+                dbc.Card([
+                    dbc.CardBody([
+                        html.H4([
+                            html.I(className="fas fa-shopping-cart me-2"),
+                            "Total Spending"
+                        ]),
+                        html.H2(id="total-spending", className="text-danger mb-0"),
+                        html.Small("Total expenses this month", className="text-muted")
+                    ])
+                ], className="modern-card")
+            ], width=3),
+            dbc.Col([
+                dbc.Card([
+                    dbc.CardBody([
+                        html.H4([
+                            html.I(className="fas fa-piggy-bank me-2"),
+                            "Total Budget"
+                        ]),
+                        html.H2(id="total-budget", className="text-info mb-0"),
+                        html.Small("Allocated budget this month", className="text-muted")
+                    ])
+                ], className="modern-card")
+            ], width=3),
+            dbc.Col([
+                dbc.Card([
+                    dbc.CardBody([
+                        html.H4([
+                            html.I(className="fas fa-chart-pie me-2"),
+                            "Remaining"
+                        ]),
+                        html.H2(id="budget-remaining", className="text-primary mb-0"),
+                        html.Small("Available budget", className="text-muted")
+                    ])
+                ], className="modern-card")
+            ], width=3),
+        ], className="mb-4"),
+        
+        # Budget Categories Chart
+        dbc.Row([
+            dbc.Col([
+                dbc.Card([
+                    dbc.CardBody([
+                        html.H4([
+                            html.I(className="fas fa-chart-donut me-2"),
+                            "Budget vs Spending by Category"
+                        ]),
+                        dcc.Graph(id="budget-categories-chart")
+                    ])
+                ], className="modern-card")
+            ], width=8),
+            dbc.Col([
+                dbc.Card([
+                    dbc.CardBody([
+                        html.H4([
+                            html.I(className="fas fa-plus-circle me-2"),
+                            "Create Budget"
+                        ]),
+                        dbc.Form([
+                            dbc.Label("Budget Category"),
+                            dbc.Select(
+                                id="budget-category-select",
+                                options=[
+                                    {"label": "Housing", "value": "housing"},
+                                    {"label": "Transportation", "value": "transportation"},
+                                    {"label": "Food & Dining", "value": "food"},
+                                    {"label": "Entertainment", "value": "entertainment"},
+                                    {"label": "Healthcare", "value": "healthcare"},
+                                    {"label": "Shopping", "value": "shopping"},
+                                    {"label": "Utilities", "value": "utilities"},
+                                    {"label": "Insurance", "value": "insurance"},
+                                    {"label": "Education", "value": "education"},
+                                    {"label": "Personal Care", "value": "personal_care"},
+                                    {"label": "Travel", "value": "travel"},
+                                    {"label": "Other", "value": "other"}
+                                ],
+                                className="mb-3"
+                            ),
+                            dbc.Label("Monthly Budget Amount ($)"),
+                            dbc.Input(
+                                id="budget-amount-input",
+                                type="number",
+                                placeholder="0.00",
+                                className="mb-3"
+                            ),
+                            dbc.Button(
+                                [html.I(className="fas fa-plus me-2"), "Create Budget"],
+                                id="create-budget-btn",
+                                color="primary",
+                                className="w-100"
+                            )
+                        ])
+                    ])
+                ], className="modern-card")
+            ], width=4)
+        ], className="mb-4"),
+        
+        # Budget Progress Bars
+        dbc.Row([
+            dbc.Col([
+                dbc.Card([
+                    dbc.CardBody([
+                        html.H4([
+                            html.I(className="fas fa-tasks me-2"),
+                            "Budget Progress"
+                        ]),
+                        html.Div(id="budget-progress-bars")
+                    ])
+                ], className="modern-card")
+            ])
+        ], className="mb-4"),
+        
+        # Recent Transactions
+        dbc.Row([
+            dbc.Col([
+                dbc.Card([
+                    dbc.CardBody([
+                        html.H4([
+                            html.I(className="fas fa-history me-2"),
+                            "Recent Transactions"
+                        ]),
+                        html.Div(id="recent-transactions-table")
+                    ])
+                ], className="modern-card")
+            ])
+        ])
+    ]
+
 # Navigation Click Handlers
 @app.callback(
     [Output('active-tab-store', 'data'),
@@ -896,19 +1249,23 @@ def create_monte_carlo_layout():
      Output('nav-analysis', 'className'),
      Output('nav-transactions', 'className'),
      Output('nav-monte-carlo', 'className'),
-     Output('nav-market-data', 'className')],
+     Output('nav-market-data', 'className'),
+     Output('nav-net-worth', 'className'),
+     Output('nav-budgeting', 'className')],
     [Input('nav-dashboard', 'n_clicks'),
      Input('nav-analysis', 'n_clicks'),
      Input('nav-transactions', 'n_clicks'),
      Input('nav-monte-carlo', 'n_clicks'),
-     Input('nav-market-data', 'n_clicks')],
+     Input('nav-market-data', 'n_clicks'),
+     Input('nav-net-worth', 'n_clicks'),
+     Input('nav-budgeting', 'n_clicks')],
     [State('active-tab-store', 'data')]
 )
-def update_navigation(dash_clicks, analysis_clicks, trans_clicks, mc_clicks, market_clicks, current_tab):
+def update_navigation(dash_clicks, analysis_clicks, trans_clicks, mc_clicks, market_clicks, net_worth_clicks, budgeting_clicks, current_tab):
     ctx = dash.callback_context
     if not ctx.triggered:
         # Default state
-        return 'dashboard', 'nav-link-custom active', 'nav-link-custom', 'nav-link-custom', 'nav-link-custom', 'nav-link-custom'
+        return 'dashboard', 'nav-link-custom active', 'nav-link-custom', 'nav-link-custom', 'nav-link-custom', 'nav-link-custom', 'nav-link-custom', 'nav-link-custom'
     
     # Determine which button was clicked
     button_id = ctx.triggered[0]['prop_id'].split('.')[0]
@@ -924,17 +1281,23 @@ def update_navigation(dash_clicks, analysis_clicks, trans_clicks, mc_clicks, mar
         active_tab = 'monte-carlo'
     elif button_id == 'nav-market-data':
         active_tab = 'market-data'
+    elif button_id == 'nav-net-worth':
+        active_tab = 'net-worth'
+    elif button_id == 'nav-budgeting':
+        active_tab = 'budgeting'
     else:
         active_tab = current_tab or 'dashboard'
     
     # Set className for each nav link
-    classes = ['nav-link-custom'] * 5
+    classes = ['nav-link-custom'] * 7
     nav_mapping = {
         'dashboard': 0,
         'analysis': 1,
         'transactions': 2,
         'monte-carlo': 3,
-        'market-data': 4
+        'market-data': 4,
+        'net-worth': 5,
+        'budgeting': 6
     }
     
     if active_tab in nav_mapping:
@@ -954,7 +1317,9 @@ def update_page_title(active_tab):
         'analysis': ('Portfolio Analysis', 'In-depth performance and risk analysis'),
         'transactions': ('Transaction Management', 'Track and manage your investment transactions'),
         'monte-carlo': ('Monte Carlo Simulation', 'Advanced portfolio projections and scenarios'),
-        'market-data': ('Market Data', 'Live market quotes and financial information')
+        'market-data': ('Market Data', 'Live market quotes and financial information'),
+        'net-worth': ('Net Worth Tracking', 'Monitor your assets, liabilities, and overall financial position'),
+        'budgeting': ('Budget Management', 'Create and track budgets to manage your spending')
     }
     
     title, subtitle = titles.get(active_tab, titles['dashboard'])
@@ -976,6 +1341,10 @@ def render_tab_content(active_tab):
         return create_transactions_layout()
     elif active_tab == "market-data":
         return create_market_data_layout()
+    elif active_tab == "net-worth":
+        return create_net_worth_layout()
+    elif active_tab == "budgeting":
+        return create_budgeting_layout()
     return create_dashboard_layout()  # Default to dashboard
 
 # Data Loading Callbacks
@@ -2056,6 +2425,311 @@ def update_intraday_chart(n_clicks, symbol, interval):
     )
     
     return fig, datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+
+# Net Worth Callbacks
+@app.callback(
+    [Output('total-assets', 'children'),
+     Output('total-liabilities', 'children'),
+     Output('net-worth-total', 'children'),
+     Output('net-worth-change', 'children')],
+    Input('interval-component', 'n_intervals')
+)
+def update_net_worth_summary(n):
+    """Update net worth summary cards."""
+    try:
+        # Mock data for demonstration
+        total_assets = 850000
+        total_liabilities = 320000
+        net_worth = total_assets - total_liabilities
+        change_percent = 2.5
+        
+        return (
+            f"${total_assets:,.0f}",
+            f"${total_liabilities:,.0f}",
+            f"${net_worth:,.0f}",
+            f"↗ +{change_percent}% this month"
+        )
+    except Exception as e:
+        return "$0", "$0", "$0", "No data"
+
+@app.callback(
+    Output('net-worth-chart', 'figure'),
+    Input('interval-component', 'n_intervals')
+)
+def update_net_worth_chart(n):
+    """Update net worth trend chart."""
+    try:
+        # Mock historical data
+        dates = pd.date_range(start='2024-01-01', end='2025-09-25', freq='M')
+        base_net_worth = 500000
+        trend = [base_net_worth + i * 2000 + np.random.randint(-5000, 10000) for i in range(len(dates))]
+        
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(
+            x=dates,
+            y=trend,
+            mode='lines+markers',
+            name='Net Worth',
+            line=dict(color='#667eea', width=3),
+            marker=dict(size=6)
+        ))
+        
+        fig.update_layout(
+            title="Net Worth Trend",
+            xaxis_title="Date",
+            yaxis_title="Net Worth ($)",
+            plot_bgcolor='rgba(0,0,0,0)',
+            paper_bgcolor='rgba(0,0,0,0)',
+            font={'family': 'Inter, sans-serif', 'color': '#e4e4e7'},
+            showlegend=False
+        )
+        
+        return fig
+    except Exception as e:
+        return {}
+
+@app.callback(
+    [Output('assets-table', 'children'),
+     Output('asset-name-input', 'value'),
+     Output('asset-value-input', 'value'),
+     Output('asset-type-select', 'value')],
+    [Input('add-asset-btn', 'n_clicks')],
+    [State('asset-type-select', 'value'),
+     State('asset-name-input', 'value'),
+     State('asset-value-input', 'value')]
+)
+def handle_add_asset(n_clicks, asset_type, asset_name, asset_value):
+    """Handle adding new assets."""
+    # Mock assets data
+    assets_data = [
+        {"Type": "Real Estate", "Name": "Primary Home", "Value": "$450,000"},
+        {"Type": "Investment", "Name": "Stock Portfolio", "Value": "$280,000"},
+        {"Type": "Cash", "Name": "Savings Account", "Value": "$120,000"}
+    ]
+    
+    if n_clicks and asset_type and asset_name and asset_value:
+        # In a real app, this would make an API call
+        assets_data.append({
+            "Type": asset_type.title().replace('_', ' '),
+            "Name": asset_name,
+            "Value": f"${float(asset_value):,.0f}"
+        })
+    
+    # Create table
+    table = dbc.Table.from_dataframe(
+        pd.DataFrame(assets_data),
+        striped=True,
+        bordered=True,
+        hover=True,
+        responsive=True,
+        className="mb-0"
+    )
+    
+    # Clear form if asset was added
+    if n_clicks and asset_type and asset_name and asset_value:
+        return table, "", "", None
+    
+    return table, dash.no_update, dash.no_update, dash.no_update
+
+@app.callback(
+    [Output('liabilities-table', 'children'),
+     Output('liability-name-input', 'value'),
+     Output('liability-balance-input', 'value'),
+     Output('liability-type-select', 'value')],
+    [Input('add-liability-btn', 'n_clicks')],
+    [State('liability-type-select', 'value'),
+     State('liability-name-input', 'value'),
+     State('liability-balance-input', 'value')]
+)
+def handle_add_liability(n_clicks, liability_type, liability_name, liability_balance):
+    """Handle adding new liabilities."""
+    # Mock liabilities data
+    liabilities_data = [
+        {"Type": "Mortgage", "Name": "Home Mortgage", "Balance": "$320,000"},
+        {"Type": "Auto Loan", "Name": "Car Loan", "Balance": "$25,000"}
+    ]
+    
+    if n_clicks and liability_type and liability_name and liability_balance:
+        # In a real app, this would make an API call
+        liabilities_data.append({
+            "Type": liability_type.title().replace('_', ' '),
+            "Name": liability_name,
+            "Balance": f"${float(liability_balance):,.0f}"
+        })
+    
+    # Create table
+    table = dbc.Table.from_dataframe(
+        pd.DataFrame(liabilities_data),
+        striped=True,
+        bordered=True,
+        hover=True,
+        responsive=True,
+        className="mb-0"
+    )
+    
+    # Clear form if liability was added
+    if n_clicks and liability_type and liability_name and liability_balance:
+        return table, "", "", None
+    
+    return table, dash.no_update, dash.no_update, dash.no_update
+
+
+# Budgeting Callbacks
+@app.callback(
+    [Output('monthly-income', 'children'),
+     Output('total-spending', 'children'),
+     Output('total-budget', 'children'),
+     Output('budget-remaining', 'children')],
+    Input('interval-component', 'n_intervals')
+)
+def update_budget_summary(n):
+    """Update budget summary cards."""
+    try:
+        # Mock data for demonstration
+        monthly_income = 8500
+        total_spending = 6200
+        total_budget = 7500
+        remaining = total_budget - total_spending
+        
+        return (
+            f"${monthly_income:,.0f}",
+            f"${total_spending:,.0f}",
+            f"${total_budget:,.0f}",
+            f"${remaining:,.0f}"
+        )
+    except Exception as e:
+        return "$0", "$0", "$0", "$0"
+
+@app.callback(
+    Output('budget-categories-chart', 'figure'),
+    Input('interval-component', 'n_intervals')
+)
+def update_budget_chart(n):
+    """Update budget vs spending chart."""
+    try:
+        # Mock budget data
+        categories = ['Housing', 'Transportation', 'Food', 'Entertainment', 'Healthcare', 'Shopping']
+        budgets = [2500, 800, 600, 400, 300, 500]
+        spending = [2400, 750, 650, 350, 280, 420]
+        
+        fig = go.Figure()
+        
+        fig.add_trace(go.Bar(
+            name='Budget',
+            x=categories,
+            y=budgets,
+            marker_color='#667eea'
+        ))
+        
+        fig.add_trace(go.Bar(
+            name='Spent',
+            x=categories,
+            y=spending,
+            marker_color='#f5576c'
+        ))
+        
+        fig.update_layout(
+            title="Budget vs Spending by Category",
+            xaxis_title="Category",
+            yaxis_title="Amount ($)",
+            barmode='group',
+            plot_bgcolor='rgba(0,0,0,0)',
+            paper_bgcolor='rgba(0,0,0,0)',
+            font={'family': 'Inter, sans-serif', 'color': '#e4e4e7'}
+        )
+        
+        return fig
+    except Exception as e:
+        return {}
+
+@app.callback(
+    [Output('budget-progress-bars', 'children'),
+     Output('budget-category-select', 'value'),
+     Output('budget-amount-input', 'value')],
+    [Input('create-budget-btn', 'n_clicks')],
+    [State('budget-category-select', 'value'),
+     State('budget-amount-input', 'value')]
+)
+def handle_create_budget(n_clicks, category, amount):
+    """Handle creating new budgets and update progress bars."""
+    # Mock budget progress data
+    budget_data = [
+        {"category": "Housing", "budget": 2500, "spent": 2400, "percentage": 96},
+        {"category": "Transportation", "budget": 800, "spent": 750, "percentage": 94},
+        {"category": "Food", "budget": 600, "spent": 650, "percentage": 108},
+        {"category": "Entertainment", "budget": 400, "spent": 350, "percentage": 88},
+        {"category": "Healthcare", "budget": 300, "spent": 280, "percentage": 93},
+        {"category": "Shopping", "budget": 500, "spent": 420, "percentage": 84}
+    ]
+    
+    if n_clicks and category and amount:
+        # In a real app, this would make an API call
+        budget_data.append({
+            "category": category.title(),
+            "budget": float(amount),
+            "spent": 0,
+            "percentage": 0
+        })
+    
+    # Create progress bars
+    progress_bars = []
+    for budget in budget_data:
+        color = "success" if budget["percentage"] <= 80 else "warning" if budget["percentage"] <= 100 else "danger"
+        
+        progress_bars.append(
+            dbc.Row([
+                dbc.Col([
+                    html.H6(f"{budget['category']}", className="mb-1"),
+                    html.Small(f"${budget['spent']:,.0f} of ${budget['budget']:,.0f}", className="text-muted")
+                ], width=4),
+                dbc.Col([
+                    dbc.Progress(
+                        value=min(budget["percentage"], 100),
+                        color=color,
+                        striped=True,
+                        animated=True if budget["percentage"] > 100 else False,
+                        className="mb-2"
+                    )
+                ], width=6),
+                dbc.Col([
+                    html.Small(f"{budget['percentage']:.0f}%", className="text-muted")
+                ], width=2)
+            ], className="mb-3")
+        )
+    
+    # Clear form if budget was created
+    if n_clicks and category and amount:
+        return progress_bars, None, ""
+    
+    return progress_bars, dash.no_update, dash.no_update
+
+@app.callback(
+    Output('recent-transactions-table', 'children'),
+    Input('interval-component', 'n_intervals')
+)
+def update_recent_transactions(n):
+    """Update recent transactions table."""
+    # Mock transaction data
+    transactions_data = [
+        {"Date": "2025-09-24", "Description": "Grocery Store", "Category": "Food", "Amount": "$85.50"},
+        {"Date": "2025-09-23", "Description": "Gas Station", "Category": "Transportation", "Amount": "$45.00"},
+        {"Date": "2025-09-22", "Description": "Electric Bill", "Category": "Utilities", "Amount": "$120.00"},
+        {"Date": "2025-09-21", "Description": "Restaurant", "Category": "Entertainment", "Amount": "$65.25"},
+        {"Date": "2025-09-20", "Description": "Pharmacy", "Category": "Healthcare", "Amount": "$28.99"}
+    ]
+    
+    table = dbc.Table.from_dataframe(
+        pd.DataFrame(transactions_data),
+        striped=True,
+        bordered=True,
+        hover=True,
+        responsive=True,
+        className="mb-0"
+    )
+    
+    return table
+
 
 if __name__ == '__main__':
     app.run(debug=True, host='127.0.0.1', port=8050)

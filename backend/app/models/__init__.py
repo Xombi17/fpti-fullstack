@@ -29,7 +29,48 @@ class TransactionType(enum.Enum):
     DIVIDEND = "dividend"
     DEPOSIT = "deposit"
     WITHDRAWAL = "withdrawal"
+
+
+class NetWorthAssetType(enum.Enum):
+    """Enumeration for net worth asset types."""
+    REAL_ESTATE = "real_estate"
+    VEHICLE = "vehicle"
+    CASH_SAVINGS = "cash_savings"
+    INVESTMENT_PORTFOLIO = "investment_portfolio"
+    RETIREMENT_ACCOUNT = "retirement_account"
+    BUSINESS_EQUITY = "business_equity"
+    COLLECTIBLES = "collectibles"
+    OTHER_ASSET = "other_asset"
+
+
+class NetWorthLiabilityType(enum.Enum):
+    """Enumeration for net worth liability types."""
+    MORTGAGE = "mortgage"
+    AUTO_LOAN = "auto_loan"
+    CREDIT_CARD = "credit_card"
+    STUDENT_LOAN = "student_loan"
+    PERSONAL_LOAN = "personal_loan"
+    BUSINESS_LOAN = "business_loan"
+    OTHER_DEBT = "other_debt"
     TRANSFER = "transfer"
+
+
+class BudgetCategory(enum.Enum):
+    """Enumeration for budget categories."""
+    HOUSING = "housing"
+    TRANSPORTATION = "transportation"
+    FOOD = "food"
+    ENTERTAINMENT = "entertainment"
+    HEALTHCARE = "healthcare"
+    SHOPPING = "shopping"
+    UTILITIES = "utilities"
+    INSURANCE = "insurance"
+    EDUCATION = "education"
+    PERSONAL_CARE = "personal_care"
+    TRAVEL = "travel"
+    SAVINGS = "savings"
+    DEBT_PAYMENT = "debt_payment"
+    OTHER = "other"
 
 
 class User(Base):
@@ -46,6 +87,10 @@ class User(Base):
     
     # Relationships
     portfolios = relationship("Portfolio", back_populates="owner")
+    budgets = relationship("Budget", back_populates="owner")
+    budget_transactions = relationship("BudgetTransaction", back_populates="owner")
+    net_worth_assets = relationship("NetWorthAsset", back_populates="owner")
+    net_worth_liabilities = relationship("NetWorthLiability", back_populates="owner")
 
 
 class Portfolio(Base):
@@ -178,3 +223,84 @@ class Budget(Base):
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    
+    # Relationships
+    owner = relationship("User", back_populates="budgets")
+
+
+class NetWorthAsset(Base):
+    """Net worth assets for detailed tracking."""
+    __tablename__ = "net_worth_assets"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    name = Column(String, nullable=False)
+    asset_type = Column(Enum(NetWorthAssetType), nullable=False)
+    current_value = Column(Float, nullable=False)
+    description = Column(Text)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    
+    # Relationships
+    owner = relationship("User", back_populates="net_worth_assets")
+
+
+class NetWorthLiability(Base):
+    """Net worth liabilities for detailed tracking."""
+    __tablename__ = "net_worth_liabilities"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    name = Column(String, nullable=False)
+    liability_type = Column(Enum(NetWorthLiabilityType), nullable=False)
+    current_balance = Column(Float, nullable=False)
+    interest_rate = Column(Float, default=0.0)
+    minimum_payment = Column(Float, default=0.0)
+    description = Column(Text)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    
+    # Relationships
+    owner = relationship("User", back_populates="net_worth_liabilities")
+
+
+class Budget(Base):
+    """Budget model for tracking spending limits by category."""
+    __tablename__ = "budgets"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    name = Column(String, nullable=False)
+    category = Column(Enum(BudgetCategory), nullable=False)
+    monthly_limit = Column(Float, nullable=False)
+    current_spent = Column(Float, default=0.0)
+    start_date = Column(DateTime(timezone=True), nullable=False)
+    end_date = Column(DateTime(timezone=True))
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    
+    # Relationships
+    owner = relationship("User", back_populates="budgets")
+    transactions = relationship("BudgetTransaction", back_populates="budget", cascade="all, delete-orphan")
+
+
+class BudgetTransaction(Base):
+    """Budget transaction model for tracking spending against budgets."""
+    __tablename__ = "budget_transactions"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    budget_id = Column(Integer, ForeignKey("budgets.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    description = Column(String, nullable=False)
+    amount = Column(Float, nullable=False)
+    transaction_date = Column(DateTime(timezone=True), nullable=False)
+    notes = Column(Text)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    
+    # Relationships
+    budget = relationship("Budget", back_populates="transactions")
+    owner = relationship("User", back_populates="budget_transactions")

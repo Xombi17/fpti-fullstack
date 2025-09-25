@@ -8,7 +8,8 @@ import uvicorn
 
 from app.core.config import settings
 from app.database import init_db
-from app.routers import portfolios, transactions, assets, market_data, analytics
+from app.routers import portfolios, transactions, assets, market_data, analytics, net_worth, budgets
+from app.background_tasks import background_manager
 
 # Create FastAPI application
 app = FastAPI(
@@ -58,10 +59,31 @@ app.include_router(
     tags=["analytics"]
 )
 
+app.include_router(
+    net_worth.router,
+    prefix=f"{settings.api_v1_str}/net-worth",
+    tags=["net-worth"]
+)
+
+app.include_router(
+    budgets.router,
+    prefix=f"{settings.api_v1_str}/budgets",
+    tags=["budgets"]
+)
+
 @app.on_event("startup")
 async def startup_event():
-    """Initialize database on startup."""
+    """Initialize database and start background tasks on startup."""
     init_db()
+    # Start background tasks in a separate task to avoid blocking startup
+    import asyncio
+    app.background_task = asyncio.create_task(background_manager.start())
+
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    """Stop background tasks on shutdown."""
+    await background_manager.stop()
 
 @app.get("/")
 async def root():
@@ -72,6 +94,28 @@ async def root():
         "docs": "/docs",
         "api": settings.api_v1_str
     }
+
+
+@app.post("/admin/tasks/net-worth-snapshot/{user_id}")
+async def trigger_net_worth_snapshot(user_id: int):
+    """Manually trigger net worth snapshot for a user (admin endpoint)."""
+    from app.background_tasks import create_net_worth_snapshot_for_user
+    try:
+        result = await create_net_worth_snapshot_for_user(user_id)
+        return {"status": "success", "data": result}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+
+@app.post("/admin/tasks/refresh-budgets")
+async def trigger_budget_refresh(budget_id: int = None):
+    """Manually trigger budget spending refresh (admin endpoint)."""
+    from app.background_tasks import refresh_budget_spending
+    try:
+        result = await refresh_budget_spending(budget_id)
+        return {"status": "success", "data": result}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
 
 @app.get("/health")
 async def health_check():
