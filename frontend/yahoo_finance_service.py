@@ -9,12 +9,17 @@ from typing import Dict, List, Optional
 import time
 
 
+def is_indian_stock(symbol: str) -> bool:
+    """Check if a symbol is an Indian stock (NSE/BSE)."""
+    return symbol.endswith('.NS') or symbol.endswith('.BO')
+
+
 def fetch_yahoo_quote(symbol: str) -> Optional[Dict]:
     """
     Fetch real-time quote data from Yahoo Finance.
     
     Args:
-        symbol: Stock symbol (e.g., 'AAPL', 'GOOGL')
+        symbol: Stock symbol (e.g., 'AAPL', 'GOOGL', 'RELIANCE.NS')
     
     Returns:
         Dict with quote data or None if failed
@@ -35,6 +40,8 @@ def fetch_yahoo_quote(symbol: str) -> Optional[Dict]:
         change = current_price - previous_close
         change_percent = (change / previous_close) * 100
         
+        # For Indian stocks, prices are already in INR from Yahoo Finance
+        # No conversion needed - Yahoo Finance provides NSE/BSE data in rupees
         return {
             "symbol": symbol.upper(),
             "price": round(current_price, 2),
@@ -46,7 +53,8 @@ def fetch_yahoo_quote(symbol: str) -> Optional[Dict]:
             "change": round(change, 2),
             "change_percent": f"{change_percent:.2f}",
             "latest_trading_day": hist.index[-1].strftime("%Y-%m-%d"),
-            "company_name": info.get('longName', symbol.upper())
+            "company_name": info.get('longName', symbol.upper()),
+            "currency": "INR" if is_indian_stock(symbol) else "USD"
         }
         
     except Exception as e:
@@ -238,6 +246,15 @@ def test_yahoo_finance():
         print(f"✅ Quote: {quote['symbol']} - ${quote['price']} ({quote['change']:+.2f})")
     else:
         print("❌ Quote fetch failed")
+
+    # Test Indian stock quote
+    print("\n🇮🇳 Testing Indian stock quote (RELIANCE.NS):")
+    indian_quote = fetch_yahoo_quote("RELIANCE.NS")
+    if indian_quote:
+        currency = "₹" if indian_quote.get('currency') == 'INR' else "$"
+        print(f"✅ Quote: {indian_quote['symbol']} - {currency}{indian_quote['price']} ({indian_quote['change']:+.2f})")
+    else:
+        print("❌ Indian stock quote fetch failed")
     
     # Test search
     print("\n🔍 Testing symbol search ('apple'):")

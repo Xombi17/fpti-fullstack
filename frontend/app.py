@@ -33,7 +33,24 @@ CHART_CONTAINER_SLIDE_UP = "chart-container slide-up"
 CHART_CONTAINER_FADE_IN = "chart-container fade-in"
 TEXT_MUTED_BLOCK = "text-muted d-block"
 UNITED_STATES = "United States"
-CURRENCY_FORMAT = '$,.0f'
+# Currency helper functions
+def is_indian_stock(symbol: str) -> bool:
+    """Check if a symbol is an Indian stock (NSE/BSE)."""
+    return symbol.endswith('.NS') or symbol.endswith('.BO')
+
+def format_currency(value: float, symbol: str) -> str:
+    """Format currency based on stock origin."""
+    if is_indian_stock(symbol):
+        return f"{value:,.2f}"  # Indian rupees without symbol
+    else:
+        return f"${value:,.2f}"  # US dollars with symbol
+
+def format_currency_compact(value: float, symbol: str) -> str:
+    """Format currency in compact form."""
+    if is_indian_stock(symbol):
+        return f"{value:,.0f}"  # Indian rupees without symbol  
+    else:
+        return f"${value:,.0f}"  # US dollars with symbol
 
 # Portfolio table columns
 COL_AVG_COST = 'Avg Cost'
@@ -1428,50 +1445,73 @@ def render_tab_content(active_tab):
 )
 def load_data(n):
     try:
-        # Mock portfolio data for demo
+        # Mock portfolio data for demo - Mixed Indian and US stocks
         portfolios = [{
             'id': 1,
             'name': 'My Portfolio',
             'holdings': [
+                {'asset': {'symbol': 'RELIANCE.NS'}, 'quantity': 50},
+                {'asset': {'symbol': 'TCS.NS'}, 'quantity': 25},
+                {'asset': {'symbol': 'INFY.NS'}, 'quantity': 100},
                 {'asset': {'symbol': 'AAPL'}, 'quantity': 10},
                 {'asset': {'symbol': 'GOOGL'}, 'quantity': 5},
-                {'asset': {'symbol': 'MSFT'}, 'quantity': 8}
+                {'asset': {'symbol': 'TSLA'}, 'quantity': 8}
             ]
         }]
         
         # Load market summary
         market_summary = fetch_market_summary()
         
-        # Get portfolio symbols for live prices
-        symbols = ['AAPL', 'GOOGL', 'MSFT']  # Demo symbols
+        # Get portfolio symbols for live prices - Mixed stocks
+        symbols = ['RELIANCE.NS', 'TCS.NS', 'INFY.NS', 'AAPL', 'GOOGL', 'TSLA']  # Mixed demo symbols
         
-        # Fetch live prices for portfolio symbols (mock data for demo)
-        live_quotes = {
-            'AAPL': {
-                'symbol': 'AAPL',
-                'price': 176.80,
-                'change': 1.50,
-                'change_percent': '0.86',
-                'volume': 45000000,
-                'timestamp': datetime.now().isoformat()
-            },
-            'GOOGL': {
-                'symbol': 'GOOGL',
-                'price': 2850.25,
-                'change': -15.30,
-                'change_percent': '-0.53',
-                'volume': 1250000,
-                'timestamp': datetime.now().isoformat()
-            },
-            'MSFT': {
-                'symbol': 'MSFT',
-                'price': 428.90,
-                'change': 3.25,
-                'change_percent': '0.76',
-                'volume': 18500000,
-                'timestamp': datetime.now().isoformat()
-            }
-        }
+        # Fetch real live prices for portfolio symbols - Indian stocks in rupees
+        live_quotes = {}
+        for symbol in symbols:
+            try:
+                quote_data = fetch_yahoo_quote(symbol)
+                if quote_data:
+                    live_quotes[symbol] = {
+                        'symbol': quote_data['symbol'],
+                        'price': quote_data['price'],
+                        'change': quote_data['change'],
+                        'change_percent': quote_data['change_percent'],
+                        'volume': quote_data['volume'],
+                        'timestamp': datetime.now().isoformat(),
+                        'currency': quote_data.get('currency', 'INR')
+                    }
+                else:
+                    # Fallback to mock data for failed fetches
+                    fallback_data = {
+                        'RELIANCE.NS': {'price': 1372.4, 'change': -22.75, 'change_percent': '-1.63'},
+                        'TCS.NS': {'price': 2957.4, 'change': -25.80, 'change_percent': '-0.87'},
+                        'INFY.NS': {'price': 1842.45, 'change': 18.65, 'change_percent': '1.02'},
+                        'AAPL': {'price': 176.80, 'change': 1.50, 'change_percent': '0.86'},
+                        'GOOGL': {'price': 2850.25, 'change': -15.30, 'change_percent': '-0.53'},
+                        'TSLA': {'price': 248.50, 'change': 3.25, 'change_percent': '1.33'}
+                    }
+                    mock_data = fallback_data.get(symbol, {'price': 1000.0, 'change': 0.0, 'change_percent': '0.00'})
+                    live_quotes[symbol] = {
+                        'symbol': symbol,
+                        'price': mock_data['price'],
+                        'change': mock_data['change'],
+                        'change_percent': mock_data['change_percent'],
+                        'volume': 1000000,
+                        'timestamp': datetime.now().isoformat(),
+                        'currency': 'INR'
+                    }
+            except Exception as e:
+                print(f"Error fetching live quote for {symbol}: {e}")
+                # Fallback mock data
+                live_quotes[symbol] = {
+                    'symbol': symbol,
+                    'price': 1000.0,
+                    'change': 0.0,
+                    'change_percent': '0.00',
+                    'volume': 1000000,
+                    'timestamp': datetime.now().isoformat(),
+                    'currency': 'INR'
+                }
         
         # Combine market data
         market_data = {
@@ -1498,7 +1538,7 @@ def load_data(n):
 )
 def update_dashboard_cards(portfolio_data):
     if not portfolio_data:
-        return "$0.00", "No P&L data", "0", "$0.00", "0.00%", "N/A", "N/A"
+        return "0.00", "No P&L data", "0", "0.00", "0.00%", "N/A", "N/A"
     
     try:
         # Calculate real values from portfolio data
@@ -1524,13 +1564,13 @@ def update_dashboard_cards(portfolio_data):
             except Exception as e:
                 print(f"Error getting holdings: {e}")
         
-        # Format values
-        total_value_str = f"${total_value:,.2f}"
-        total_pnl = f"${total_value * 0.071:,.2f} (+7.1%)"  # Mock P&L calculation
+        # Format values (mixed portfolio - will show combined value in rupees for simplicity)
+        total_value_str = f"{total_value:,.2f}"
+        total_pnl = f"{total_value * 0.071:,.2f} (+7.1%)"  # Mock P&L calculation
         total_holdings_str = str(total_holdings)
-        daily_change = f"${total_value * 0.0099:,.2f}"
+        daily_change = f"{total_value * 0.0099:,.2f}"
         daily_change_percent = "+0.99%"
-        best_performer = "AAPL"  # Would need market data to calculate
+        best_performer = "RELIANCE.NS"  # Updated to Indian stock
         best_performer_change = "+2.45%"
         
         return total_value_str, total_pnl, total_holdings_str, daily_change, daily_change_percent, best_performer, best_performer_change
@@ -1538,7 +1578,7 @@ def update_dashboard_cards(portfolio_data):
     except Exception as e:
         print(f"Error updating dashboard cards: {e}")
         # Fallback to mock data
-        return "$125,430.25", "+$8,430.25 (+7.21%)", "15", "+$1,234.56", "+0.99%", "AAPL", "+2.45%"
+        return "3,44,807", "+24,236 (+7.21%)", "6", "+3,412", "+0.99%", "RELIANCE.NS", "+2.45%"
 
 @app.callback(
     Output('portfolio-value-chart', 'figure'),
@@ -1601,12 +1641,12 @@ def update_portfolio_chart(portfolio_data):
                 'color': '#e4e4e7'
             },
             yaxis={
-                'title': {'text': 'Portfolio Value ($)', 'font': {'size': 14, 'color': '#a1a1aa'}},
+                'title': {'text': 'Portfolio Value', 'font': {'size': 14, 'color': '#a1a1aa'}},
                 'showgrid': True,
                 'gridcolor': 'rgba(161, 161, 170, 0.2)',
                 'showline': False,
                 'zeroline': False,
-                'tickformat': '$,.0f',
+                'tickformat': ',.0f',
                 'color': '#e4e4e7'
             },
             hovermode='x unified',
@@ -1645,7 +1685,7 @@ def update_allocation_chart(portfolio_data):
     fig.update_traces(
         textposition='inside', 
         textinfo='percent+label',
-        hovertemplate='<b>%{label}</b><br>Value: $%{value:,.0f}<br>Percentage: %{percent}<extra></extra>',
+        hovertemplate='<b>%{label}</b><br>Value: %{value:,.0f}<br>Percentage: %{percent}<extra></extra>',
         textfont={'size': 12, 'color': 'white', 'family': 'Inter, sans-serif'}
     )
     
@@ -1723,56 +1763,67 @@ def update_holdings_table(portfolio_data):
             if all_holdings:
                 df = pd.DataFrame(all_holdings)
             else:
-                # Fallback to mock data
+                # Fallback to mock data - Mixed Indian and US stocks
                 holdings_data = {
-                    'Symbol': ['AAPL', 'GOOGL', 'MSFT', 'TSLA', 'AMZN'],
-                    'Shares': [100, 50, 75, 25, 30],
-                    'Avg Cost': [150.00, 2800.00, 300.00, 800.00, 3200.00],
-                    'Current Price': [175.00, 2950.00, 350.00, 750.00, 3400.00],
-                    'Market Value': [17500, 147500, 26250, 18750, 102000],
-                    'P&L': [2500, 7500, 3750, -1250, 6000],
-                    'P&L %': [16.67, 5.36, 16.67, -6.25, 6.25]
+                    'Symbol': ['RELIANCE.NS', 'TCS.NS', 'INFY.NS', 'AAPL', 'GOOGL', 'TSLA'],
+                    'Shares': [50, 25, 100, 10, 5, 8],
+                    'Avg Cost': [1400.00, 3000.00, 1750.00, 150.00, 2800.00, 240.00],
+                    'Current Price': [1372.40, 2957.40, 1842.45, 176.80, 2850.25, 248.50],
+                    'Market Value': [68620, 73935, 184245, 1768, 14251, 1988],
+                    'P&L': [-1380, -1065, 9245, 268, 251, 68],
+                    'P&L %': [-1.97, -1.42, 5.29, 17.87, 1.79, 3.54]
                 }
                 df = pd.DataFrame(holdings_data)
                 
         except Exception as e:
             print(f"Error processing holdings data: {e}")
-            # Fallback to mock data
+            # Fallback to mock data - Mixed Indian and US stocks
             holdings_data = {
-                'Symbol': ['AAPL', 'GOOGL', 'MSFT', 'TSLA', 'AMZN'],
-                'Shares': [100, 50, 75, 25, 30],
-                'Avg Cost': [150.00, 2800.00, 300.00, 800.00, 3200.00],
-                'Current Price': [175.00, 2950.00, 350.00, 750.00, 3400.00],
-                'Market Value': [17500, 147500, 26250, 18750, 102000],
-                'P&L': [2500, 7500, 3750, -1250, 6000],
-                'P&L %': [16.67, 5.36, 16.67, -6.25, 6.25]
+                'Symbol': ['RELIANCE.NS', 'TCS.NS', 'INFY.NS', 'AAPL', 'GOOGL', 'TSLA'],
+                'Shares': [50, 25, 100, 10, 5, 8],
+                'Avg Cost': [1400.00, 3000.00, 1750.00, 150.00, 2800.00, 240.00],
+                'Current Price': [1372.40, 2957.40, 1842.45, 176.80, 2850.25, 248.50],
+                'Market Value': [68620, 73935, 184245, 1768, 14251, 1988],
+                'P&L': [-1380, -1065, 9245, 268, 251, 68],
+                'P&L %': [-1.97, -1.42, 5.29, 17.87, 1.79, 3.54]
             }
             df = pd.DataFrame(holdings_data)
+    
+    # Format currency columns based on stock type and store original P&L for styling
+    pnl_values = []
+    if not df.empty and 'Symbol' in df.columns:
+        for idx, row in df.iterrows():
+            symbol = row['Symbol']
+            if 'Avg Cost' in df.columns:
+                df.at[idx, 'Avg Cost'] = format_currency(row['Avg Cost'], symbol)
+            if 'Current Price' in df.columns:
+                df.at[idx, 'Current Price'] = format_currency(row['Current Price'], symbol)
+            if 'Market Value' in df.columns:
+                df.at[idx, 'Market Value'] = format_currency_compact(row['Market Value'], symbol)
+            if 'P&L' in df.columns:
+                original_pnl = row['P&L']
+                pnl_values.append(original_pnl)
+                df.at[idx, 'P&L'] = format_currency_compact(row['P&L'], symbol)
     
     return dash_table.DataTable(
         data=df.to_dict('records'),
         columns=[
             {'name': 'Symbol', 'id': 'Symbol'},
             {'name': 'Shares', 'id': 'Shares', 'type': 'numeric'},
-            {'name': 'Avg Cost', 'id': 'Avg Cost', 'type': 'numeric', 'format': {'specifier': '$,.2f'}},
-            {'name': 'Current Price', 'id': 'Current Price', 'type': 'numeric', 'format': {'specifier': '$,.2f'}},
-            {'name': 'Market Value', 'id': 'Market Value', 'type': 'numeric', 'format': {'specifier': '$,.0f'}},
-            {'name': 'P&L', 'id': 'P&L', 'type': 'numeric', 'format': {'specifier': '$,.0f'}},
+            {'name': 'Avg Cost', 'id': 'Avg Cost'},
+            {'name': 'Current Price', 'id': 'Current Price'},
+            {'name': 'Market Value', 'id': 'Market Value'},
+            {'name': 'P&L', 'id': 'P&L'},
             {'name': 'P&L %', 'id': 'P&L %', 'type': 'numeric', 'format': {'specifier': '.2%'}},
         ],
         style_cell={'textAlign': 'center'},
         style_data_conditional=[
             {
-                'if': {'filter_query': '{P&L} > 0'},
-                'backgroundColor': '#d4edda',
-                'color': 'black',
-            },
-            {
-                'if': {'filter_query': '{P&L} < 0'},
-                'backgroundColor': '#f8d7da',
-                'color': 'black',
-            }
-        ]
+                'if': {'row_index': i},
+                'backgroundColor': '#d4edda' if pnl_val >= 0 else '#f8d7da',
+                'color': 'black'
+            } for i, pnl_val in enumerate(pnl_values)
+        ] if pnl_values else []
     )
 
 # Monte Carlo Callback
@@ -2006,8 +2057,8 @@ def update_transactions_table(n_clicks, portfolio_filter, type_filter, add_resul
                 {"name": "Symbol", "id": "Symbol"},
                 {"name": "Type", "id": "Type"},
                 {"name": "Quantity", "id": "Quantity", "type": "numeric"},
-                {"name": "Price", "id": "Price", "type": "numeric", "format": {"specifier": "$,.2f"}},
-                {"name": "Total", "id": "Total", "type": "numeric", "format": {"specifier": "$,.2f"}},
+                {"name": "Price", "id": "Price", "type": "numeric", "format": {"specifier": ",.2f"}},
+                {"name": "Total", "id": "Total", "type": "numeric", "format": {"specifier": ",.2f"}},
             ],
             style_cell={'textAlign': 'center'},
             style_data_conditional=[
@@ -2078,8 +2129,8 @@ def update_risk_metrics(portfolio_data):
         
         # Mock risk calculations
         risk_metrics = [
-            {"metric": "Value at Risk (95%)", "value": "$12,450", "color": "danger"},
-            {"metric": "Expected Shortfall", "value": "$18,230", "color": "danger"},
+            {"metric": "Value at Risk (95%)", "value": "87,350", "color": "danger"},
+            {"metric": "Expected Shortfall", "value": "1,28,470", "color": "danger"},
             {"metric": "Concentration Risk", "value": "Medium", "color": "warning"},
             {"metric": "Liquidity Score", "value": "High", "color": "success"},
             {"metric": "Correlation to S&P 500", "value": "0.87", "color": "info"},
@@ -2341,7 +2392,7 @@ def update_market_summary(market_data):
                         dbc.Card([
                             dbc.CardBody([
                                 html.H6(name, className="card-title text-muted"),
-                                html.H5(f"${price:,.2f}", className="text-info mb-0"),
+                                html.H5(f"{price:,.2f}", className="text-info mb-0"),
                                 html.Small("Live", className="text-success")
                             ])
                         ], className="text-center")
@@ -2368,17 +2419,19 @@ def get_stock_quote(n_clicks, symbol):
     change_color = "success" if quote_data['change'] >= 0 else "danger"
     change_icon = "fa-arrow-up" if quote_data['change'] >= 0 else "fa-arrow-down"
     
+    symbol = quote_data['symbol']
+    
     return dbc.Card([
         dbc.CardBody([
             dbc.Row([
                 dbc.Col([
                     html.H4(quote_data['symbol'], className="mb-1"),
-                    html.H3(f"${quote_data['price']:.2f}", className="text-primary mb-0")
+                    html.H3(format_currency(quote_data['price'], symbol), className="text-primary mb-0")
                 ], width=6),
                 dbc.Col([
                     html.P([
                         html.I(className=f"fas {change_icon} me-1"),
-                        f"${quote_data['change']:.2f} ({quote_data['change_percent']}%)"
+                        f"{format_currency(quote_data['change'], symbol)} ({quote_data['change_percent']}%)"
                     ], className=f"text-{change_color} mb-1"),
                     html.Small(f"Volume: {quote_data['volume']:,}", className="text-muted")
                 ], width=6, className="text-end")
@@ -2387,19 +2440,19 @@ def get_stock_quote(n_clicks, symbol):
             dbc.Row([
                 dbc.Col([
                     html.Small("Open", className="text-muted d-block"),
-                    html.Strong(f"${quote_data['open']:.2f}")
+                    html.Strong(format_currency(quote_data['open'], symbol))
                 ], width=3),
                 dbc.Col([
                     html.Small("High", className="text-muted d-block"),
-                    html.Strong(f"${quote_data['high']:.2f}")
+                    html.Strong(format_currency(quote_data['high'], symbol))
                 ], width=3),
                 dbc.Col([
                     html.Small("Low", className="text-muted d-block"),
-                    html.Strong(f"${quote_data['low']:.2f}")
+                    html.Strong(format_currency(quote_data['low'], symbol))
                 ], width=3),
                 dbc.Col([
                     html.Small("Prev Close", className="text-muted d-block"),
-                    html.Strong(f"${quote_data['previous_close']:.2f}")
+                    html.Strong(format_currency(quote_data['previous_close'], symbol))
                 ], width=3)
             ])
         ])
@@ -2422,8 +2475,8 @@ def update_live_portfolio_prices(market_data):
         for symbol, quote in live_quotes.items():
             table_data.append({
                 "Symbol": symbol,
-                "Price": f"${quote['price']:.2f}",
-                "Change": f"${quote['change']:.2f}",
+                "Price": format_currency(quote['price'], symbol),
+                "Change": format_currency(quote['change'], symbol),
                 "Change %": f"{quote['change_percent']}%",
                 "Volume": f"{quote['volume']:,}",
                 "Status": "LIVE"
